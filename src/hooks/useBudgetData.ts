@@ -1,27 +1,30 @@
-import { useState, useEffect, useCallback } from "react";
-import { getBudget } from "@/lib/budget/budgetRepository";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { BUDGET_STORAGE_KEY } from "@/lib/constants";
+import { createLocalStorageStore } from "@/lib/storage/localStorageStore";
 import type { MonthlyBudget } from "@/types/monthlyBudget";
 
-/**
- * Hook to load budget data from localStorage for a given month.
- * Handles hydration by loading after mount.
- */
+const budgetStore = createLocalStorageStore<MonthlyBudget[]>(
+  BUDGET_STORAGE_KEY,
+  (raw) => JSON.parse(raw),
+  [],
+);
+
 export function useBudgetData(month: string) {
-  const [budget, setBudget] = useState<MonthlyBudget | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const budgets = useSyncExternalStore(
+    budgetStore.subscribe,
+    budgetStore.getSnapshot,
+    budgetStore.getServerSnapshot,
+  );
 
-  const loadBudget = useCallback(() => {
-    setIsLoading(true);
-    const loaded = getBudget(month);
-    setBudget(loaded);
-    setIsLoading(false);
-  }, [month]);
+  const budget = useMemo(
+    () => budgets.find((b) => b.month === month) ?? null,
+    [budgets, month],
+  );
 
-  useEffect(() => {
-    // This is a valid use case: syncing with external system (localStorage)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadBudget();
-  }, [loadBudget]);
+  const refresh = useCallback(() => {
+    // No-op: useSyncExternalStore auto-syncs via storage events.
+    // Kept for API compatibility.
+  }, []);
 
-  return { budget, isLoading, refresh: loadBudget };
+  return { budget, isLoading: false, refresh };
 }

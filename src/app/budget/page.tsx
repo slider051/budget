@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useBudget } from "@/hooks/useBudget";
 import { useUI } from "@/hooks/useUI";
 import { useBudgetData } from "@/hooks/useBudgetData";
@@ -20,18 +21,40 @@ import {
 import BudgetCategoryCard from "@/components/budget/BudgetCategoryCard";
 import BudgetSummaryGauge from "@/components/budget/BudgetSummaryGauge";
 import TopExpensesList from "@/components/budget/TopExpensesList";
-import FilterBar from "@/components/budget/FilterBar";
+import BudgetFilterControls from "@/components/budget/BudgetFilterControls";
 import PageHeader from "@/components/ui/PageHeader";
 import MonthPicker from "@/components/ui/MonthPicker";
 import BudgetEditModal from "@/components/budget/BudgetEditModal";
+import type { BudgetFilterState } from "@/types/budgetFilter";
+import type { BudgetCategoryData } from "@/lib/filters/budgetFilters";
+import { applyBudgetFilters } from "@/lib/filters/budgetFilters";
 
-export default function BudgetPage() {
+function BudgetContent() {
   const { state } = useBudget();
   const { selectedMonth } = useUI();
+  const searchParams = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { budget, refresh } = useBudgetData(selectedMonth);
 
-  const categoryData = useMemo(() => {
+  const filters: BudgetFilterState = useMemo(() => {
+    const q = searchParams.get("q") || "";
+    const status = (searchParams.get("status") ||
+      "all") as BudgetFilterState["status"];
+    const sort = (searchParams.get("sort") ||
+      "usagePct") as BudgetFilterState["sort"];
+    const dir = (searchParams.get("dir") || "desc") as BudgetFilterState["dir"];
+    let minUsage = searchParams.get("minUsage") || "";
+
+    const minNum = minUsage ? parseFloat(minUsage) : null;
+    if (minNum !== null && !isNaN(minNum)) {
+      const clamped = Math.max(0, Math.min(100, minNum));
+      minUsage = String(clamped);
+    }
+
+    return { q, status, sort, dir, minUsage };
+  }, [searchParams]);
+
+  const categoryData = useMemo((): readonly BudgetCategoryData[] => {
     return EXPENSE_CATEGORIES.map((category) => {
       const spent = calculateCategorySpent(
         state.transactions,
@@ -39,6 +62,7 @@ export default function BudgetPage() {
         category,
       );
       const budgetAmount = budget?.categories[category] ?? 0;
+      const usagePct = budgetAmount > 0 ? (spent / budgetAmount) * 100 : null;
 
       return {
         category: CATEGORY_EN_NAMES[category] || category,
@@ -46,9 +70,15 @@ export default function BudgetPage() {
         spent,
         budget: budgetAmount,
         icon: CATEGORY_ICONS[category],
+        usagePct,
       };
     });
   }, [state.transactions, selectedMonth, budget]);
+
+  const filteredCategoryData = useMemo(
+    () => applyBudgetFilters(categoryData, filters),
+    [categoryData, filters],
+  );
 
   const totalBudget = useMemo(
     () => calculateMonthlyBudgetTotal(budget),
@@ -96,9 +126,17 @@ export default function BudgetPage() {
     <div>
       <PageHeader title="Budget" description="Create and track your budgets" />
 
-      <div className="mb-6 flex items-center justify-between">
-        <MonthPicker />
-        <FilterBar onAddBudgetClick={() => setIsModalOpen(true)} />
+      <div className="mb-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <MonthPicker />
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+          >
+            + Add new budget
+          </button>
+        </div>
+        <BudgetFilterControls filters={filters} />
       </div>
 
       {!hasBudget && (
@@ -114,18 +152,27 @@ export default function BudgetPage() {
         {/* Main Content Area */}
         <div className="flex-1">
           <div className="mb-4 text-sm text-gray-600">
-            {categoryData.length} items
+            {filteredCategoryData.length} items
+            {filteredCategoryData.length !== categoryData.length && (
+              <span className="text-gray-400">
+                {" "}
+                (전체 {categoryData.length}개 중)
+              </span>
+            )}
           </div>
 
           {/* Category Cards Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {categoryData.map((data) => (
+            {filteredCategoryData.map((data) => (
               <BudgetCategoryCard
                 key={data.category}
                 category={data.category}
                 spent={data.spent}
                 budget={data.budget}
                 icon={data.icon}
+                month={selectedMonth}
+                koreanName={data.koreanName}
+                onEditBudget={() => setIsModalOpen(true)}
               />
             ))}
           </div>
@@ -170,5 +217,23 @@ export default function BudgetPage() {
         onSaved={handleModalSaved}
       />
     </div>
+  );
+}
+
+export default function BudgetPage() {
+  return (
+    <Suspense
+      fallback={
+        <div>
+          <PageHeader
+            title="Budget"
+            description="Create and track your budgets"
+          />
+          <div className="text-center py-12 text-gray-500">Loading...</div>
+        </div>
+      }
+    >
+      <BudgetContent />
+    </Suspense>
   );
 }

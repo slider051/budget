@@ -1,14 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import CircularProgress from "./CircularProgress";
 import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
 import { formatCurrency } from "@/lib/formatters";
+import {
+  shouldShowBudgetAlert,
+  markAlertAsSeen,
+} from "@/lib/alerts/budgetAlerts";
 
 interface BudgetCategoryCardProps {
   category: string;
   spent: number;
   budget: number;
   icon?: string;
+  month: string;
+  koreanName: string;
+  onEditBudget?: () => void;
 }
 
 export default function BudgetCategoryCard({
@@ -16,11 +25,23 @@ export default function BudgetCategoryCard({
   spent,
   budget,
   icon,
+  month,
+  koreanName,
+  onEditBudget,
 }: BudgetCategoryCardProps) {
   const percentage = budget > 0 ? (spent / budget) * 100 : 0;
   const remaining = budget - spent;
   const isOnTrack = percentage <= 80;
   const needsAttention = percentage > 80;
+
+  const [showAlert, setShowAlert] = useState(() =>
+    shouldShowBudgetAlert(spent, budget, month, koreanName),
+  );
+
+  const handleDismissAlert = () => {
+    markAlertAsSeen(month, koreanName);
+    setShowAlert(false);
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow">
@@ -105,6 +126,53 @@ export default function BudgetCategoryCard({
           )}
         </div>
       </div>
+
+      {showAlert && (
+        <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-orange-900 mb-1">
+                Needs attention
+              </p>
+              <p className="text-xs text-orange-700 mb-2">
+                {koreanName} 예산의 {percentage.toFixed(0)}%를 사용했습니다
+              </p>
+              <div className="flex gap-2">
+                {onEditBudget && (
+                  <Button onClick={onEditBudget} size="sm" variant="secondary">
+                    예산 수정
+                  </Button>
+                )}
+                <Button
+                  onClick={handleDismissAlert}
+                  size="sm"
+                  variant="outline"
+                >
+                  확인
+                </Button>
+              </div>
+            </div>
+            <button
+              onClick={handleDismissAlert}
+              className="text-orange-400 hover:text-orange-600"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

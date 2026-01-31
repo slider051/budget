@@ -2,25 +2,33 @@
 
 import { useBudget } from "@/hooks/useBudget";
 import { filterTransactions, sortTransactionsByDate } from "@/lib/calculations";
+import type { Transaction } from "@/types/budget";
 import TransactionItem from "./TransactionItem";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
 
 interface TransactionListProps {
-  limit?: number;
+  readonly limit?: number;
+  readonly transactions?: readonly Transaction[];
 }
 
-export default function TransactionList({ limit }: TransactionListProps) {
+export default function TransactionList({
+  limit,
+  transactions: transactionsProp,
+}: TransactionListProps) {
   const { state } = useBudget();
 
-  const filtered = filterTransactions(
-    state.transactions,
-    state.filter.type,
-    state.filter.category,
-  );
-
-  const sorted = sortTransactionsByDate(filtered, "desc");
-  const displayed = limit ? sorted.slice(0, limit) : sorted;
+  const displayed = transactionsProp
+    ? transactionsProp
+    : (() => {
+        const filtered = filterTransactions(
+          state.transactions,
+          state.filter.type,
+          state.filter.category,
+        );
+        const sorted = sortTransactionsByDate(filtered, "desc");
+        return limit ? sorted.slice(0, limit) : sorted;
+      })();
 
   if (displayed.length === 0) {
     return (

@@ -1,11 +1,12 @@
-import { BUDGET_STORAGE_KEY } from '@/lib/constants';
-import type { MonthlyBudget } from '@/types/monthlyBudget';
+import { BUDGET_STORAGE_KEY } from "@/lib/constants";
+import { notifyStorageChange } from "@/lib/storage/localStorageStore";
+import type { MonthlyBudget } from "@/types/monthlyBudget";
 
 /**
  * Get budget for a specific month
  */
 export function getBudget(month: string): MonthlyBudget | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
 
   try {
     const data = localStorage.getItem(BUDGET_STORAGE_KEY);
@@ -23,9 +24,9 @@ export function getBudget(month: string): MonthlyBudget | null {
  */
 export function upsertBudget(
   month: string,
-  categories: Record<string, number>
+  categories: Record<string, number>,
 ): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   try {
     const data = localStorage.getItem(BUDGET_STORAGE_KEY);
@@ -49,8 +50,10 @@ export function upsertBudget(
       const updatedBudgets = [...budgets, newBudget];
       localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(updatedBudgets));
     }
+
+    notifyStorageChange(BUDGET_STORAGE_KEY);
   } catch (error) {
-    console.error('Failed to upsert budget:', error);
+    console.error("Failed to upsert budget:", error);
   }
 }
 
@@ -58,7 +61,7 @@ export function upsertBudget(
  * List all budgets for a specific year
  */
 export function listBudgetsByYear(year: number): MonthlyBudget[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
 
   try {
     const data = localStorage.getItem(BUDGET_STORAGE_KEY);
@@ -75,7 +78,7 @@ export function listBudgetsByYear(year: number): MonthlyBudget[] {
  * Delete budget for a specific month
  */
 export function deleteBudget(month: string): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   try {
     const data = localStorage.getItem(BUDGET_STORAGE_KEY);
@@ -85,8 +88,9 @@ export function deleteBudget(month: string): void {
     const filtered = budgets.filter((b) => b.month !== month);
 
     localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(filtered));
+    notifyStorageChange(BUDGET_STORAGE_KEY);
   } catch (error) {
-    console.error('Failed to delete budget:', error);
+    console.error("Failed to delete budget:", error);
   }
 }
 
@@ -95,12 +99,12 @@ export function deleteBudget(month: string): void {
  */
 export function applyYearTemplate(
   year: number,
-  categories: Record<string, number>
+  categories: Record<string, number>,
 ): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   for (let month = 1; month <= 12; month++) {
-    const monthStr = String(month).padStart(2, '0');
+    const monthStr = String(month).padStart(2, "0");
     const monthKey = `${year}-${monthStr}`;
     upsertBudget(monthKey, categories);
   }
