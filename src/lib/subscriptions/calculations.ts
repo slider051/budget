@@ -25,13 +25,32 @@ function parseDate(date: string): Date {
 }
 
 function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function addMonths(date: Date, months: number): Date {
-  const next = new Date(date.getTime());
-  next.setMonth(next.getMonth() + months);
-  return next;
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  const targetMonthIndex = month + months;
+  const targetYear = year + Math.floor(targetMonthIndex / 12);
+  const normalizedTargetMonth = ((targetMonthIndex % 12) + 12) % 12;
+  const lastDayOfMonth = new Date(
+    targetYear,
+    normalizedTargetMonth + 1,
+    0,
+  ).getDate();
+  const targetDay = Math.min(day, lastDayOfMonth);
+
+  return new Date(targetYear, normalizedTargetMonth, targetDay);
+}
+
+function getLocalToday(now: Date): string {
+  return formatDate(now);
 }
 
 export function getCycleMonths(
@@ -122,10 +141,10 @@ export function getNextPaymentDate(
     subscription.customCycleMonths,
   );
 
-  const nowDate = parseDate(now.toISOString().split("T")[0]);
+  const nowDate = parseDate(getLocalToday(now));
   let next = parseDate(subscription.billingStartDate);
 
-  while (next < nowDate) {
+  while (next <= nowDate) {
     next = addMonths(next, cycleMonths);
   }
 
