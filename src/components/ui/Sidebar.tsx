@@ -8,6 +8,7 @@ const menuItems = [
   { href: "/budget", label: "예산 현황", icon: "💰" },
   { href: "/transactions", label: "거래내역", icon: "📝" },
   { href: "/fixed-expenses/new", label: "고정지출", icon: "🔁" },
+  { href: "/subscriptions", label: "구독관리", icon: "🎟️" },
   { href: "/analysis", label: "연간 분석", icon: "📈" },
   { href: "/settings", label: "설정", icon: "⚙️" },
 ];

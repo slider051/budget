@@ -48,7 +48,7 @@ export default function SettingsPage() {
       if (result.success) {
         setMessage({
           type: "success",
-          text: `${result.message} (거래: ${result.imported?.transactions ?? 0}, 예산: ${result.imported?.budgets ?? 0})`,
+          text: `${result.message} (거래: ${result.imported?.transactions ?? 0}, 예산: ${result.imported?.budgets ?? 0}, 구독: ${result.imported?.subscriptions ?? 0})`,
         });
         setTimeout(() => setMessage(null), 5000);
       } else {

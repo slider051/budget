@@ -5,12 +5,13 @@
 ## 프로젝트 요약
 
 - **기술 스택**: Next.js 15 (App Router), TypeScript, Tailwind CSS, Zod, React Context
-- **페이지**: 대시보드(`/`), 예산(`/budget`), 거래내역(`/transactions`), 연간분석(`/analysis`), 설정(`/settings`)
+- **페이지**: 대시보드(`/`), 예산(`/budget`), 거래내역(`/transactions`), 구독관리(`/subscriptions`), 연간분석(`/analysis`), 설정(`/settings`)
 - **핵심 기능**: 
   - 수입/지출 입력 및 카테고리별 분석
   - 고급 필터링 (검색어, 날짜, 금액 범위, 카테고리, 정렬)
   - 예산 설정 및 90% 초과 알림
   - 데이터 백업/복원 (JSON)
+  - 구독관리 (진행 중)
   - 다크모드 (system/light/dark)
 - **데이터 저장**: localStorage (SSR 안전, 추상화 인터페이스)
 - **아키텍처**: 불변성 보장, Server Components 기본, Context+Reducer 상태관리
@@ -43,17 +44,11 @@ npm run lint:fix  # ESLint 자동 수정
 - 복원 (Replace/Merge 모드)
 - 알림 초기화
 
-### 다크모드 (진행 중)
-- system/light/dark 3상태 토글
-- localStorage 저장
-- **수정 필요**: 다크모드 적용이 화면에 반영 안 됨 (DevTools에서 `dark` 클래스 확인 필요)
-
-## 내일 수정할 사항
-
-1. **다크모드 디버깅**: `document.documentElement.classList.contains("dark")` false 원인 파악
-   - ThemeClassApplier useEffect 실행 여부 확인 (console.log 추가)
-   - localStorage 값과 초기 스크립트 동작 확인
-   - Tailwind dark variant 생성 여부 확인 (`npm run build` 후 CSS 검증)
+### 구독관리 (진행 중)
+- 기본 서비스 프리셋 (OTT, AI, 쇼핑, 음악, 독서)
+- 결제 가격 중심 UI, 사용자 수 분담 계산, 할인율 자동 계산
+- 통화 선택 (KRW/USD/JPY), 결제주기 (월/연간/그외 월 수), 다음 결제일 계산
+- 메모 보기 토글, 종료일 기준 결제일 표시 규칙 반영
 
 ## 아직 구현되지 않은 것
 
@@ -61,4 +56,4 @@ npm run lint:fix  # ESLint 자동 수정
 - 고정 지출 자동 생성 (매월 자동 입력)
 - 예산 템플릿 저장/불러오기
 - CSV/Excel 내보내기
-- 다크모드 완전 동작 (현재 토글은 있으나 화면 반영 안 됨)
+- 구독관리 기능 고도화 (진행 중)

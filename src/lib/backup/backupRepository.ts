@@ -1,7 +1,13 @@
-import { BUDGET_STORAGE_KEY, STORAGE_KEY } from "@/lib/constants";
+import {
+  BUDGET_STORAGE_KEY,
+  STORAGE_KEY,
+  SUBSCRIPTIONS_STORAGE_KEY,
+} from "@/lib/constants";
 import { notifyStorageChange } from "@/lib/storage/localStorageStore";
+import { normalizeSubscriptionRecord } from "@/lib/subscriptions/subscriptionRepository";
 import type { Transaction } from "@/types/budget";
 import type { MonthlyBudget } from "@/types/monthlyBudget";
+import type { Subscription } from "@/types/subscription";
 import type { BackupData, ImportMode, ImportResult } from "@/types/backup";
 import { backupDataSchema } from "./backupSchema";
 
@@ -14,23 +20,29 @@ export function exportBackup(): BackupData {
       exportedAt: new Date().toISOString(),
       transactions: [],
       budgets: [],
+      subscriptions: [],
     };
   }
 
   try {
     const transactionsRaw = localStorage.getItem(STORAGE_KEY);
     const budgetsRaw = localStorage.getItem(BUDGET_STORAGE_KEY);
+    const subscriptionsRaw = localStorage.getItem(SUBSCRIPTIONS_STORAGE_KEY);
 
     const transactions: Transaction[] = transactionsRaw
       ? JSON.parse(transactionsRaw)
       : [];
     const budgets: MonthlyBudget[] = budgetsRaw ? JSON.parse(budgetsRaw) : [];
+    const subscriptions: Subscription[] = subscriptionsRaw
+      ? JSON.parse(subscriptionsRaw)
+      : [];
 
     return {
       version: BACKUP_VERSION,
       exportedAt: new Date().toISOString(),
       transactions,
       budgets,
+      subscriptions,
     };
   } catch (error) {
     console.error("Failed to export backup:", error);
@@ -39,6 +51,7 @@ export function exportBackup(): BackupData {
       exportedAt: new Date().toISOString(),
       transactions: [],
       budgets: [],
+      subscriptions: [],
     };
   }
 }
@@ -84,19 +97,32 @@ export function importBackup(
     }
 
     const data = validation.data;
+    const normalizedImportedSubscriptions = data.subscriptions
+      .map((item) => normalizeSubscriptionRecord(item))
+      .filter((item): item is Subscription => item !== null);
 
     if (mode === "replace") {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data.transactions));
       localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(data.budgets));
+      localStorage.setItem(
+        SUBSCRIPTIONS_STORAGE_KEY,
+        JSON.stringify(normalizedImportedSubscriptions),
+      );
     } else {
       const existingTransactionsRaw = localStorage.getItem(STORAGE_KEY);
       const existingBudgetsRaw = localStorage.getItem(BUDGET_STORAGE_KEY);
+      const existingSubscriptionsRaw = localStorage.getItem(
+        SUBSCRIPTIONS_STORAGE_KEY,
+      );
 
       const existingTransactions: Transaction[] = existingTransactionsRaw
         ? JSON.parse(existingTransactionsRaw)
         : [];
       const existingBudgets: MonthlyBudget[] = existingBudgetsRaw
         ? JSON.parse(existingBudgetsRaw)
+        : [];
+      const existingSubscriptions: Subscription[] = existingSubscriptionsRaw
+        ? JSON.parse(existingSubscriptionsRaw)
         : [];
 
       const transactionMap = new Map(
@@ -106,6 +132,12 @@ export function importBackup(
 
       const budgetMap = new Map(existingBudgets.map((b) => [b.month, b]));
       data.budgets.forEach((b) => budgetMap.set(b.month, b));
+      const subscriptionMap = new Map(
+        existingSubscriptions.map((s) => [s.id, s]),
+      );
+      normalizedImportedSubscriptions.forEach((s) =>
+        subscriptionMap.set(s.id, s),
+      );
 
       localStorage.setItem(
         STORAGE_KEY,
@@ -115,10 +147,15 @@ export function importBackup(
         BUDGET_STORAGE_KEY,
         JSON.stringify(Array.from(budgetMap.values())),
       );
+      localStorage.setItem(
+        SUBSCRIPTIONS_STORAGE_KEY,
+        JSON.stringify(Array.from(subscriptionMap.values())),
+      );
     }
 
     notifyStorageChange(STORAGE_KEY);
     notifyStorageChange(BUDGET_STORAGE_KEY);
+    notifyStorageChange(SUBSCRIPTIONS_STORAGE_KEY);
 
     return {
       success: true,
@@ -126,6 +163,7 @@ export function importBackup(
       imported: {
         transactions: data.transactions.length,
         budgets: data.budgets.length,
+        subscriptions: normalizedImportedSubscriptions.length,
       },
     };
   } catch (error) {
