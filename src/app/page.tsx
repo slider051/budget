@@ -1,4 +1,5 @@
 import QuickActionTiles from "@/components/budget/QuickActionTiles";
+import PresetBanner from "@/components/dashboard/PresetBanner";
 
 
 
@@ -17,6 +18,8 @@ export default function Home() {
           목표를 달성해보세요.
         </p>
       </div>
+
+      <PresetBanner />
 
       {/* Quick Action Tiles */}
       <QuickActionTiles />

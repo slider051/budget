@@ -14,6 +14,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 interface BudgetContextValue {
   state: BudgetState;
   addTransaction: (transaction: Omit<Transaction, "id" | "createdAt">) => void;
+  replaceTransactions: (transactions: readonly Transaction[]) => void;
   deleteTransaction: (id: string) => void;
   setFilter: (
     type?: TransactionType | "all",
@@ -62,6 +63,10 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "DELETE_TRANSACTION", payload: id });
   };
 
+  const replaceTransactions = (transactions: readonly Transaction[]) => {
+    dispatch({ type: "LOAD_TRANSACTIONS", payload: transactions });
+  };
+
   const setFilter = (
     type?: TransactionType | "all",
     category?: string | "all",
@@ -100,6 +105,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
   const value: BudgetContextValue = {
     state,
     addTransaction,
+    replaceTransactions,
     deleteTransaction,
     setFilter,
     addFixedExpenses,
