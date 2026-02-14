@@ -50,75 +50,86 @@
 
 ## 현재 갭 점검 (2026-02-14)
 - [부분 충족] 1번 RLS: 테이블 정책은 적용됨. API 경계/권한 테스트 자동화는 부족.
-- [미충족] 2번 멱등성: 월 자동 생성 배치/유니크 키 아직 없음.
-- [부분 충족] 3번 DB 검증: 기본 제약은 있으나 배치/신규 테이블 제약 추가 필요.
+- [충족] 2번 멱등성: RPC + 5회 재실행 + 중복 0행 확인 완료.
+- [부분 충족] 3번 DB 검증: 주요 제약은 보강됨. 서버 입력 검증/에러 매핑 보강 필요.
 - [미충족] 4번 localStorage 제거: `backupRepository`, `storage.ts`, `alerts` 등 잔재 존재.
 - [미충족] 5번 단일 집계 쿼리: 분석은 클라이언트 계산 위주.
 - [부분 충족] 6번 비동기 UX: subscriptions는 반영됨, 전 영역 통일 필요.
-- [미충족] 7번 크론 검증: 미구현.
+- [미충족] 7번 크론 검증: Cron 경로 미구현.
 - [미충족] 8번 실시간 알림: 콘솔 로그 중심.
 - [부분 충족] 9번 트랜잭션 안전성: 일부 비동기 처리만 있음, 원자적 서버 처리 부족.
 - [부분 충족] 10번 무중단 회귀: 수동 확인 수준, 자동 회귀 테스트 부족.
 
 ## MVP 1.5 완료 체크리스트 (<=10)
-1. `subscriptions` 제약/인덱스 적용
+1. [x] `subscriptions` 제약/인덱스 적용
 - SQL 마이그레이션 + 롤백 스크립트 쌍으로 관리.
 
-2. `generated_charges`(또는 `runs`) 테이블 생성
+2. [x] `generated_charges`(또는 `runs`) 테이블 생성
 - `UNIQUE(user_id, subscription_id, year_month)` 적용.
 - 월 조회/실행 이력 조회용 인덱스 추가.
 
-3. `transactions` 중복 방지 최종 방어
+3. [x] `transactions` 중복 방지 최종 방어
 - 자동 생성 거래에 `generation_key`(또는 `subscription_id + year_month`) 컬럼 추가.
 - DB 유니크 제약으로 중복 삽입 차단.
 
-4. 멱등 배치 함수(RPC) 구현
+4. [x] 멱등 배치 함수(RPC) 구현
 - 재실행 5회 테스트에서 upsert/no-op 보장.
 - 실패 시 재시도해도 결과 동일해야 함.
 
-5. 배치 실행 경로/시간 기준 확정
+5. [ ] 배치 실행 경로/시간 기준 확정
 - 권장 경로: `Vercel Cron -> API Route -> Supabase RPC`.
 - `Asia/Seoul` 기준 월 경계(말일 23:59~익월 00:01) 테스트 통과.
 
-6. localStorage fallback 제거
+6. [ ] localStorage fallback 제거
 - 허용 목록: 테마/UI 설정만 유지.
 - 그 외 사용 금지 영역은 lint 규칙으로 강제.
 
-7. 분석 집계 서버화
+7. [ ] 분석 집계 서버화
 - 월별/카테고리 집계를 View 또는 RPC로 이전.
 - RLS/권한 검증 + 성능 인덱스 점검 포함.
 
-8. 서버 입력 검증 통합
+8. [ ] 서버 입력 검증 통합
 - Zod 검증 + DB 제약 이중 방어.
 - 에러 메시지는 사용자용/로그용 분리 매핑.
 
-9. Slack 알림 연결
+9. [ ] Slack 알림 연결
 - 실패/지연/중복탐지 이벤트 알림.
 - severity 기준(critical/error/warn)과 라우팅 채널 정의.
 
-10. 회귀 테스트 자동화 + 배포 게이트
+10. [ ] 회귀 테스트 자동화 + 배포 게이트
 - 로그인/세션/CRUD/배치/분석 시나리오 자동화.
 - `PASS 증빙 템플릿`(테스트 로그, SQL 링크, 스크린샷)으로 승급 판단.
+
+## 진행 현황 (2026-02-14)
+- 완료:
+  1. Phase 1 SQL 적용(`subscriptions` 제약/인덱스, `generated_charges`, `transactions.generation_key`)
+  2. Phase 2 RPC 적용(`run_monthly_subscription_generation`)
+  3. 멱등성 검증 통과(동일 월 5회 실행 결과 `created=0, skipped=3, total=3`)
+  4. 중복 최종 검증 통과(`generation_key` 중복 조회 0행)
+- 다음 작업:
+  1. `Vercel Cron -> API -> RPC` 연결
+  2. `Asia/Seoul` 월 경계 테스트
+  3. Phase 3(localStorage 제거/분석 서버화) 착수
 
 ## MVP 1.5 실행 플랜
 
 ### Phase 1: DB 방어선
-1. `subscriptions` 마이그레이션/롤백 스크립트 정리
-2. `generated_charges` 테이블 + 유니크/인덱스 추가
-3. `transactions.generation_key` 추가 + 유니크 제약 적용
+1. [x] `subscriptions` 마이그레이션/롤백 스크립트 정리
+2. [x] `generated_charges` 테이블 + 유니크/인덱스 추가
+3. [x] `transactions.generation_key` 추가 + 유니크 제약 적용
 
 ### Phase 2: 배치 멱등성
-4. Supabase RPC(월 자동 생성) 구현
-5. Cron API 라우트 연결 + `Asia/Seoul` 경계 테스트
+4. [x] Supabase RPC(월 자동 생성) 구현
+5. [ ] Cron API 라우트 연결 + `Asia/Seoul` 경계 테스트
 
 ### Phase 3: 아키텍처/성능
-6. localStorage fallback 제거 + lint 금지 규칙
-7. 분석 집계 View/RPC 서버화 + RLS/인덱스 검증
+6. [ ] localStorage fallback 제거 + lint 금지 규칙
+7. [ ] 분석 집계 View/RPC 서버화 + RLS/인덱스 검증
 
 ### Phase 4: 운영/게이트
-8. Zod + DB 제약 에러 매핑 정리
-9. Slack 알림(severity/route) 연결
-10. 회귀 자동화 + PASS 증빙 템플릿 운영
+8. [ ] Zod + DB 제약 에러 매핑 정리
+9. [ ] Slack 알림(severity/route) 연결
+10. [ ] 회귀 자동화 + PASS 증빙 템플릿 운영
 
 ## MVP 1.5 Definition of Done
 1. Top 10 항목 전부 PASS 증빙(테스트 로그/스크린샷/SQL 링크).
