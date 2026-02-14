@@ -1,111 +1,180 @@
+import { createClient } from "@/lib/supabase/client";
 import { BUDGET_STORAGE_KEY } from "@/lib/constants";
 import { notifyStorageChange } from "@/lib/storage/localStorageStore";
 import type { MonthlyBudget } from "@/types/monthlyBudget";
 
-/**
- * Get budget for a specific month
- */
-export function getBudget(month: string): MonthlyBudget | null {
-  if (typeof window === "undefined") return null;
+interface MonthlyBudgetRow {
+  id: string;
+  month: string;
+  categories: unknown;
+  updated_at: string;
+}
 
-  try {
-    const data = localStorage.getItem(BUDGET_STORAGE_KEY);
-    if (!data) return null;
+function normalizeCategories(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object") {
+    return {};
+  }
 
-    const budgets: MonthlyBudget[] = JSON.parse(data);
-    return budgets.find((b) => b.month === month) ?? null;
-  } catch {
+  return Object.entries(value as Record<string, unknown>).reduce<Record<string, number>>(
+    (acc, [key, raw]) => {
+      const parsed = typeof raw === "number" ? raw : Number(raw);
+      if (Number.isFinite(parsed)) {
+        acc[key] = parsed;
+      }
+      return acc;
+    },
+    {},
+  );
+}
+
+function mapRowToBudget(row: MonthlyBudgetRow): MonthlyBudget {
+  return {
+    month: row.month,
+    categories: normalizeCategories(row.categories),
+    updatedAt: row.updated_at,
+  };
+}
+
+function syncBudgetCache(budgets: readonly MonthlyBudget[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(budgets));
+  notifyStorageChange(BUDGET_STORAGE_KEY);
+}
+
+async function listBudgetRows(): Promise<MonthlyBudgetRow[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("monthly_budgets")
+    .select("id,month,categories,updated_at")
+    .order("month", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as MonthlyBudgetRow[];
+}
+
+export async function listAllBudgets(): Promise<MonthlyBudget[]> {
+  const rows = await listBudgetRows();
+  const budgets = rows.map(mapRowToBudget);
+  syncBudgetCache(budgets);
+  return budgets;
+}
+
+export async function getBudget(month: string): Promise<MonthlyBudget | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("monthly_budgets")
+    .select("id,month,categories,updated_at")
+    .eq("month", month)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data) {
     return null;
   }
+
+  return mapRowToBudget(data as MonthlyBudgetRow);
 }
 
-/**
- * Upsert (create or update) budget for a specific month
- */
-export function upsertBudget(
+export async function upsertBudget(
   month: string,
   categories: Record<string, number>,
-): void {
-  if (typeof window === "undefined") return;
+): Promise<void> {
+  const supabase = createClient();
+  const updatedAt = new Date().toISOString();
 
-  try {
-    const data = localStorage.getItem(BUDGET_STORAGE_KEY);
-    const budgets: MonthlyBudget[] = data ? JSON.parse(data) : [];
+  const { data: existingRows, error: findError } = await supabase
+    .from("monthly_budgets")
+    .select("id")
+    .eq("month", month)
+    .limit(1);
 
-    const existingIndex = budgets.findIndex((b) => b.month === month);
+  if (findError) {
+    throw new Error(findError.message);
+  }
 
-    const newBudget: MonthlyBudget = {
-      month,
-      categories,
-      updatedAt: new Date().toISOString(),
-    };
+  const existing = existingRows?.[0] as { id: string } | undefined;
 
-    if (existingIndex >= 0) {
-      // Update existing
-      const updatedBudgets = [...budgets];
-      updatedBudgets[existingIndex] = newBudget;
-      localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(updatedBudgets));
-    } else {
-      // Create new
-      const updatedBudgets = [...budgets, newBudget];
-      localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(updatedBudgets));
+  if (existing?.id) {
+    const { error } = await supabase
+      .from("monthly_budgets")
+      .update({ categories, updated_at: updatedAt })
+      .eq("id", existing.id);
+
+    if (error) {
+      throw new Error(error.message);
     }
+  } else {
+    const { error } = await supabase
+      .from("monthly_budgets")
+      .insert({ month, categories, updated_at: updatedAt });
 
-    notifyStorageChange(BUDGET_STORAGE_KEY);
-  } catch (error) {
-    console.error("Failed to upsert budget:", error);
+    if (error) {
+      throw new Error(error.message);
+    }
   }
+
+  await listAllBudgets();
 }
 
-/**
- * List all budgets for a specific year
- */
-export function listBudgetsByYear(year: number): MonthlyBudget[] {
-  if (typeof window === "undefined") return [];
+export async function listBudgetsByYear(year: number): Promise<MonthlyBudget[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("monthly_budgets")
+    .select("id,month,categories,updated_at")
+    .like("month", `${year}-%`)
+    .order("month", { ascending: true });
 
-  try {
-    const data = localStorage.getItem(BUDGET_STORAGE_KEY);
-    if (!data) return [];
-
-    const budgets: MonthlyBudget[] = JSON.parse(data);
-    return budgets.filter((b) => b.month.startsWith(`${year}-`));
-  } catch {
-    return [];
+  if (error) {
+    throw new Error(error.message);
   }
+
+  const budgets = ((data ?? []) as MonthlyBudgetRow[]).map(mapRowToBudget);
+
+  if (typeof window !== "undefined") {
+    const existing = localStorage.getItem(BUDGET_STORAGE_KEY);
+    const parsed: MonthlyBudget[] = existing ? JSON.parse(existing) : [];
+    const merged = [
+      ...parsed.filter((item) => !item.month.startsWith(`${year}-`)),
+      ...budgets,
+    ];
+    syncBudgetCache(merged);
+  }
+
+  return budgets;
 }
 
-/**
- * Delete budget for a specific month
- */
-export function deleteBudget(month: string): void {
-  if (typeof window === "undefined") return;
+export async function deleteBudget(month: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("monthly_budgets")
+    .delete()
+    .eq("month", month);
 
-  try {
-    const data = localStorage.getItem(BUDGET_STORAGE_KEY);
-    if (!data) return;
-
-    const budgets: MonthlyBudget[] = JSON.parse(data);
-    const filtered = budgets.filter((b) => b.month !== month);
-
-    localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(filtered));
-    notifyStorageChange(BUDGET_STORAGE_KEY);
-  } catch (error) {
-    console.error("Failed to delete budget:", error);
+  if (error) {
+    throw new Error(error.message);
   }
+
+  await listAllBudgets();
 }
 
-/**
- * Apply year template: create budgets for 12 months
- */
-export function applyYearTemplate(
+export async function applyYearTemplate(
   year: number,
   categories: Record<string, number>,
-): void {
-  if (typeof window === "undefined") return;
+): Promise<void> {
+  const tasks: Promise<void>[] = [];
 
-  for (let month = 1; month <= 12; month++) {
+  for (let month = 1; month <= 12; month += 1) {
     const monthStr = String(month).padStart(2, "0");
     const monthKey = `${year}-${monthStr}`;
-    upsertBudget(monthKey, categories);
+    tasks.push(upsertBudget(monthKey, categories));
   }
+
+  await Promise.all(tasks);
 }

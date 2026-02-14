@@ -1,30 +1,27 @@
-import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { BUDGET_STORAGE_KEY } from "@/lib/constants";
-import { createLocalStorageStore } from "@/lib/storage/localStorageStore";
+import { useCallback, useEffect, useState } from "react";
+import { getBudget } from "@/lib/budget/budgetRepository";
 import type { MonthlyBudget } from "@/types/monthlyBudget";
 
-const budgetStore = createLocalStorageStore<MonthlyBudget[]>(
-  BUDGET_STORAGE_KEY,
-  (raw) => JSON.parse(raw),
-  [],
-);
-
 export function useBudgetData(month: string) {
-  const budgets = useSyncExternalStore(
-    budgetStore.subscribe,
-    budgetStore.getSnapshot,
-    budgetStore.getServerSnapshot,
-  );
+  const [budget, setBudget] = useState<MonthlyBudget | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const budget = useMemo(
-    () => budgets.find((b) => b.month === month) ?? null,
-    [budgets, month],
-  );
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const next = await getBudget(month);
+      setBudget(next);
+    } catch (error) {
+      console.error("Failed to load budget:", error);
+      setBudget(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [month]);
 
-  const refresh = useCallback(() => {
-    // No-op: useSyncExternalStore auto-syncs via storage events.
-    // Kept for API compatibility.
-  }, []);
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
-  return { budget, isLoading: false, refresh };
+  return { budget, isLoading, refresh };
 }

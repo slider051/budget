@@ -35,7 +35,9 @@ function getCurrentMonth(): string {
   return `${year}-${month}`;
 }
 
-function buildPresetIncomeTransaction(presetId: DashboardPresetId): Transaction {
+function buildPresetIncomeTransaction(
+  presetId: DashboardPresetId,
+): Transaction {
   const preset = DASHBOARD_PRESETS[presetId];
   const today = getToday();
   const nowIso = new Date().toISOString();
@@ -55,7 +57,9 @@ function buildPresetSubscription(
   presetId: DashboardPresetId,
   presetServiceKey: string,
 ): Subscription | null {
-  const service = SUBSCRIPTION_PRESETS.find((item) => item.key === presetServiceKey);
+  const service = SUBSCRIPTION_PRESETS.find(
+    (item) => item.key === presetServiceKey,
+  );
   if (!service) return null;
 
   const nowIso = new Date().toISOString();
@@ -122,7 +126,9 @@ export function applyDashboardPreset(
     buildPresetIncomeTransaction(presetId),
   ];
 
-  upsertBudget(getCurrentMonth(), { ...preset.budgets });
+  void upsertBudget(getCurrentMonth(), { ...preset.budgets }).catch((error) => {
+    console.error("Failed to apply preset budget:", error);
+  });
   replacePresetSubscriptions(presetId);
 
   if (typeof window !== "undefined") {

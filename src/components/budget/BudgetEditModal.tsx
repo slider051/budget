@@ -22,42 +22,58 @@ function BudgetEditModalContent({
 }: Omit<BudgetEditModalProps, "isOpen">) {
   const [showYearTemplate, setShowYearTemplate] = useState(false);
   const [templateYear, setTemplateYear] = useState(new Date().getFullYear());
+  const [isSaving, setIsSaving] = useState(false);
 
   const [categories, setCategories] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {};
     EXPENSE_CATEGORIES.forEach((cat) => {
-      // Convert from won to 만원 (divide by 10,000)
       const wonAmount = initialCategories[cat] ?? 0;
       initial[cat] = Math.round(wonAmount / 10000);
     });
     return initial;
   });
 
-  const handleSave = () => {
-    // Convert from 만원 to won (multiply by 10,000)
-    const categoriesInWon: Record<string, number> = {};
-    Object.entries(categories).forEach(([cat, manWon]) => {
-      categoriesInWon[cat] = manWon * 10000;
-    });
-    upsertBudget(month, categoriesInWon);
-    onSaved();
-    onClose();
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const categoriesInWon: Record<string, number> = {};
+      Object.entries(categories).forEach(([cat, manWon]) => {
+        categoriesInWon[cat] = manWon * 10000;
+      });
+
+      await upsertBudget(month, categoriesInWon);
+      onSaved();
+      onClose();
+    } catch (error) {
+      console.error(error);
+      alert("예산 저장 중 오류가 발생했습니다.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleApplyYear = () => {
-    // Convert from 만원 to won (multiply by 10,000)
-    const categoriesInWon: Record<string, number> = {};
-    Object.entries(categories).forEach(([cat, manWon]) => {
-      categoriesInWon[cat] = manWon * 10000;
-    });
-    applyYearTemplate(templateYear, categoriesInWon);
-    alert(`${templateYear}년 1~12월 예산이 설정되었습니다.`);
-    onSaved();
-    onClose();
+  const handleApplyYear = async () => {
+    setIsSaving(true);
+    try {
+      const categoriesInWon: Record<string, number> = {};
+      Object.entries(categories).forEach(([cat, manWon]) => {
+        categoriesInWon[cat] = manWon * 10000;
+      });
+
+      await applyYearTemplate(templateYear, categoriesInWon);
+      alert(`${templateYear}년 1~12월 예산을 적용했습니다.`);
+      onSaved();
+      onClose();
+    } catch (error) {
+      console.error(error);
+      alert("연간 템플릿 적용 중 오류가 발생했습니다.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCategoryChange = (category: string, value: string) => {
-    const numValue = parseInt(value) || 0;
+    const numValue = parseInt(value, 10) || 0;
     setCategories({
       ...categories,
       [category]: numValue,
@@ -65,19 +81,14 @@ function BudgetEditModalContent({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
+        <div className="sticky top-0 rounded-t-2xl border-b border-gray-200 bg-white px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-gray-900">
-              {month} 예산 설정
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
+            <h2 className="text-2xl font-semibold text-gray-900">{month} 예산 설정</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
               <svg
-                className="w-6 h-6"
+                className="h-6 w-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -93,18 +104,15 @@ function BudgetEditModalContent({
           </div>
         </div>
 
-        <div className="px-6 py-6 space-y-6">
-          {/* Category Inputs */}
+        <div className="space-y-6 px-6 py-6">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                카테고리별 예산
-              </h3>
-              <span className="text-sm text-indigo-600 font-medium bg-indigo-50 px-3 py-1 rounded-full">
-                단위: 만원 (예: 30 = 30만원)
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">카테고리별 예산</h3>
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-600">
+                단위: 만원
               </span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {EXPENSE_CATEGORIES.map((category) => (
                 <div key={category} className="relative">
                   <Input
@@ -122,14 +130,13 @@ function BudgetEditModalContent({
             </div>
           </div>
 
-          {/* Year Template Section */}
           <div className="border-t border-gray-200 pt-6">
             <button
               onClick={() => setShowYearTemplate(!showYearTemplate)}
-              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium"
+              className="flex items-center gap-2 font-medium text-indigo-600 hover:text-indigo-700"
             >
               <svg
-                className="w-5 h-5"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -145,9 +152,9 @@ function BudgetEditModalContent({
             </button>
 
             {showYearTemplate && (
-              <div className="mt-4 p-4 bg-indigo-50 rounded-xl">
-                <p className="text-sm text-indigo-900 mb-3">
-                  위 금액을 선택한 연도의 1~12월에 모두 적용합니다.
+              <div className="mt-4 rounded-xl bg-indigo-50 p-4">
+                <p className="mb-3 text-sm text-indigo-900">
+                  현재 금액을 선택한 연도의 1~12월에 모두 적용합니다.
                 </p>
                 <div className="flex items-end gap-3">
                   <Input
@@ -156,9 +163,9 @@ function BudgetEditModalContent({
                     min="2020"
                     max="2030"
                     value={templateYear}
-                    onChange={(e) => setTemplateYear(parseInt(e.target.value))}
+                    onChange={(e) => setTemplateYear(parseInt(e.target.value, 10))}
                   />
-                  <Button onClick={handleApplyYear} className="mb-0">
+                  <Button onClick={handleApplyYear} className="mb-0" disabled={isSaving}>
                     {templateYear}년 전체 적용
                   </Button>
                 </div>
@@ -167,12 +174,12 @@ function BudgetEditModalContent({
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-2xl flex gap-3">
-          <Button variant="outline" onClick={onClose} className="flex-1">
+        <div className="sticky bottom-0 flex gap-3 rounded-b-2xl border-t border-gray-200 bg-white px-6 py-4">
+          <Button variant="outline" onClick={onClose} className="flex-1" disabled={isSaving}>
             취소
           </Button>
-          <Button onClick={handleSave} className="flex-1">
-            저장
+          <Button onClick={handleSave} className="flex-1" disabled={isSaving}>
+            {isSaving ? "저장 중..." : "저장"}
           </Button>
         </div>
       </div>
@@ -183,6 +190,5 @@ function BudgetEditModalContent({
 export default function BudgetEditModal(props: BudgetEditModalProps) {
   if (!props.isOpen) return null;
 
-  // Use key to reset state when month changes
   return <BudgetEditModalContent key={props.month} {...props} />;
 }

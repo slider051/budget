@@ -1,28 +1,30 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useBudget } from '@/hooks/useBudget';
-import { validateTransaction } from '@/lib/validation';
-import { getTodayString } from '@/lib/formatters';
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/lib/constants';
-import Card from '@/components/ui/Card';
-import type { TransactionType } from '@/types/budget';
+import { useState } from "react";
+import { useBudget } from "@/hooks/useBudget";
+import { validateTransaction } from "@/lib/validation";
+import { getTodayString } from "@/lib/formatters";
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants";
+import Card from "@/components/ui/Card";
+import type { TransactionType } from "@/types/budget";
 
 export default function TransactionForm() {
   const { addTransaction } = useBudget();
 
-  const [type, setType] = useState<TransactionType>('expense');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
-  const [description, setDescription] = useState('');
+  const [type, setType] = useState<TransactionType>("expense");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
   const [date, setDate] = useState(getTodayString());
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
+    setIsSubmitting(true);
 
     try {
       const validated = validateTransaction({
@@ -33,31 +35,30 @@ export default function TransactionForm() {
         date,
       });
 
-      addTransaction(validated);
+      await addTransaction(validated);
 
-      // Reset form
-      setAmount('');
-      setCategory('');
-      setDescription('');
+      setAmount("");
+      setCategory("");
+      setDescription("");
       setDate(getTodayString());
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('입력값을 확인해주세요');
+        setError("입력값을 확인해주세요");
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        새 거래 추가
-      </h3>
+      <h3 className="mb-4 text-lg font-semibold text-gray-900">새 거래 추가</h3>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
             {error}
           </div>
         )}
@@ -67,12 +68,12 @@ export default function TransactionForm() {
             <input
               type="radio"
               value="income"
-              checked={type === 'income'}
+              checked={type === "income"}
               onChange={(e) => {
                 setType(e.target.value as TransactionType);
-                setCategory('');
+                setCategory("");
               }}
-              className="w-4 h-4"
+              className="h-4 w-4"
             />
             <span className="text-gray-700">수입</span>
           </label>
@@ -81,21 +82,19 @@ export default function TransactionForm() {
             <input
               type="radio"
               value="expense"
-              checked={type === 'expense'}
+              checked={type === "expense"}
               onChange={(e) => {
                 setType(e.target.value as TransactionType);
-                setCategory('');
+                setCategory("");
               }}
-              className="w-4 h-4"
+              className="h-4 w-4"
             />
             <span className="text-gray-700">지출</span>
           </label>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            금액
-          </label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">금액</label>
           <input
             type="number"
             value={amount}
@@ -103,19 +102,17 @@ export default function TransactionForm() {
             placeholder="10000"
             required
             min="1"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            카테고리
-          </label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">카테고리</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">선택하세요</option>
             {categories.map((cat) => (
@@ -127,37 +124,34 @@ export default function TransactionForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            설명
-          </label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">설명</label>
           <input
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="상세 내용 (선택사항)"
             maxLength={200}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            날짜
-          </label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">날짜</label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
+          disabled={isSubmitting}
+          className="w-full rounded-md bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          추가하기
+          {isSubmitting ? "저장 중..." : "추가하기"}
         </button>
       </form>
     </Card>

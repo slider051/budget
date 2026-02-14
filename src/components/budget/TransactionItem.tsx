@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import type { Transaction } from '@/types/budget';
-import { formatCurrency, formatShortDate } from '@/lib/formatters';
-import { useBudget } from '@/hooks/useBudget';
+import { useState } from "react";
+import type { Transaction } from "@/types/budget";
+import { formatCurrency, formatShortDate } from "@/lib/formatters";
+import { useBudget } from "@/hooks/useBudget";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -10,30 +11,37 @@ interface TransactionItemProps {
 
 export default function TransactionItem({ transaction }: TransactionItemProps) {
   const { deleteTransaction } = useBudget();
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = () => {
-    if (confirm('이 거래를 삭제하시겠습니까?')) {
-      deleteTransaction(transaction.id);
+  const handleDelete = async () => {
+    if (!confirm("이 거래를 삭제하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await deleteTransaction(transaction.id);
+    } catch (error) {
+      console.error(error);
+      alert("삭제 중 오류가 발생했습니다.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+    <div className="flex items-center justify-between border-b border-gray-100 py-3 last:border-0">
       <div className="flex-1">
         <div className="flex items-center gap-3">
           <span
-            className={`inline-block w-2 h-2 rounded-full ${
-              transaction.type === 'income' ? 'bg-green-500' : 'bg-red-500'
+            className={`inline-block h-2 w-2 rounded-full ${
+              transaction.type === "income" ? "bg-green-500" : "bg-red-500"
             }`}
           />
           <div>
-            <div className="font-medium text-gray-900">
-              {transaction.category}
-            </div>
+            <div className="font-medium text-gray-900">{transaction.category}</div>
             {transaction.description && (
-              <div className="text-sm text-gray-500">
-                {transaction.description}
-              </div>
+              <div className="text-sm text-gray-500">{transaction.description}</div>
             )}
           </div>
         </div>
@@ -43,24 +51,23 @@ export default function TransactionItem({ transaction }: TransactionItemProps) {
         <div className="text-right">
           <div
             className={`font-semibold ${
-              transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+              transaction.type === "income" ? "text-green-600" : "text-red-600"
             }`}
           >
-            {transaction.type === 'income' ? '+' : '-'}
+            {transaction.type === "income" ? "+" : "-"}
             {formatCurrency(transaction.amount)}
           </div>
-          <div className="text-sm text-gray-500">
-            {formatShortDate(transaction.date)}
-          </div>
+          <div className="text-sm text-gray-500">{formatShortDate(transaction.date)}</div>
         </div>
 
         <button
           onClick={handleDelete}
-          className="text-gray-400 hover:text-red-600 transition-colors"
+          disabled={isDeleting}
+          className="text-gray-400 transition-colors hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="삭제"
         >
           <svg
-            className="w-5 h-5"
+            className="h-5 w-5"
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"

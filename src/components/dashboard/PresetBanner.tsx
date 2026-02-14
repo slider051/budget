@@ -24,17 +24,26 @@ export default function PresetBanner() {
     () => getStoredPreset(),
   );
   const [message, setMessage] = useState<string>("");
+  const [isApplying, setIsApplying] = useState(false);
 
   const presetItems = useMemo(
     () => DASHBOARD_PRESET_ORDER.map((id) => DASHBOARD_PRESETS[id]),
     [],
   );
 
-  const handleApplyPreset = (presetId: DashboardPresetId) => {
-    const result = applyDashboardPreset(presetId, state.transactions);
-    replaceTransactions(result.transactions);
-    setLastAppliedPreset(presetId);
-    setMessage(`${result.presetLabel} 프리셋을 적용했습니다.`);
+  const handleApplyPreset = async (presetId: DashboardPresetId) => {
+    try {
+      setIsApplying(true);
+      const result = applyDashboardPreset(presetId, state.transactions);
+      await replaceTransactions(result.transactions);
+      setLastAppliedPreset(presetId);
+      setMessage(`${result.presetLabel} 프리셋을 적용했습니다.`);
+    } catch (error) {
+      console.error(error);
+      setMessage("프리셋 적용 중 오류가 발생했습니다.");
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   return (
@@ -45,11 +54,10 @@ export default function PresetBanner() {
             프리셋 빠른 설정
           </p>
           <h2 className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-            직업만 알려주시면 바로 프리셋 등록해드려요
+            직업만 고르면 기본 예산/거래를 바로 적용합니다
           </h2>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-            학생 / 직장인 기본 샘플을 즉시 적용합니다. (거래 1건 + 월 예산 + 기본
-            구독)
+            학생/직장인 프리셋을 즉시 적용합니다.
           </p>
           {lastAppliedPreset && (
             <p className="mt-2 text-xs text-indigo-700 dark:text-indigo-300">
@@ -70,6 +78,7 @@ export default function PresetBanner() {
               type="button"
               variant={lastAppliedPreset === preset.id ? "primary" : "outline"}
               onClick={() => handleApplyPreset(preset.id)}
+              disabled={isApplying}
               className="whitespace-nowrap"
             >
               {preset.label}

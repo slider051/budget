@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useReducer, useEffect, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useReducer,
+  type ReactNode,
+} from "react";
+import { usePathname } from "next/navigation";
 import { budgetReducer, initialState } from "./budgetReducer";
 import type {
   BudgetState,
@@ -8,19 +15,27 @@ import type {
   TransactionType,
   FixedExpenseInput,
 } from "@/types/budget";
+import {
+  deleteTransactionById,
+  deleteTransactionsByIds,
+  insertTransaction,
+  listTransactions,
+  upsertTransactions,
+} from "@/lib/transactions/transactionRepository";
 import { storage } from "@/lib/storage";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 interface BudgetContextValue {
   state: BudgetState;
-  addTransaction: (transaction: Omit<Transaction, "id" | "createdAt">) => void;
-  replaceTransactions: (transactions: readonly Transaction[]) => void;
-  deleteTransaction: (id: string) => void;
+  addTransaction: (
+    transaction: Omit<Transaction, "id" | "createdAt">,
+  ) => Promise<void>;
+  replaceTransactions: (transactions: readonly Transaction[]) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
   setFilter: (
     type?: TransactionType | "all",
     category?: string | "all",
   ) => void;
-  addFixedExpenses: (input: FixedExpenseInput) => void;
+  addFixedExpenses: (input: FixedExpenseInput) => Promise<void>;
 }
 
 export const BudgetContext = createContext<BudgetContextValue | undefined>(
@@ -29,24 +44,24 @@ export const BudgetContext = createContext<BudgetContextValue | undefined>(
 
 export function BudgetProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(budgetReducer, initialState);
-  const isClient = useLocalStorage();
+  const pathname = usePathname();
+  const shouldSkipSync =
+    pathname.startsWith("/login") || pathname.startsWith("/auth");
 
-  // Load from localStorage on mount (client-side only)
-  useEffect(() => {
-    if (isClient) {
-      const loaded = storage.load();
-      if (loaded.length > 0) {
-        dispatch({ type: "LOAD_TRANSACTIONS", payload: loaded });
-      }
+  const refreshTransactions = useCallback(async () => {
+    try {
+      const loaded = await listTransactions();
+      storage.save(loaded);
+      dispatch({ type: "LOAD_TRANSACTIONS", payload: loaded });
+    } catch (error) {
+      console.error("Failed to load transactions from Supabase:", error);
     }
-  }, [isClient]);
+  }, []);
 
-  // Save to localStorage when transactions change
   useEffect(() => {
-    if (isClient && state.transactions.length >= 0) {
-      storage.save(state.transactions);
-    }
-  }, [state.transactions, isClient]);
+    if (shouldSkipSync) return;
+    void refreshTransactions();
+  }, [refreshTransactions, shouldSkipSync]);
 
   const addTransaction = (
     transaction: Omit<Transaction, "id" | "createdAt">,
@@ -56,15 +71,38 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     };
-    dispatch({ type: "ADD_TRANSACTION", payload: newTransaction });
+
+    return insertTransaction(newTransaction)
+      .then(() => refreshTransactions())
+      .catch((error) => {
+        console.error("Failed to add transaction:", error);
+        throw error;
+      });
   };
 
   const deleteTransaction = (id: string) => {
-    dispatch({ type: "DELETE_TRANSACTION", payload: id });
+    return deleteTransactionById(id)
+      .then(() => refreshTransactions())
+      .catch((error) => {
+        console.error("Failed to delete transaction:", error);
+        throw error;
+      });
   };
 
   const replaceTransactions = (transactions: readonly Transaction[]) => {
-    dispatch({ type: "LOAD_TRANSACTIONS", payload: transactions });
+    const existingIds = state.transactions.map((item) => item.id);
+    const nextIds = new Set(transactions.map((item) => item.id));
+    const idsToDelete = existingIds.filter((id) => !nextIds.has(id));
+
+    return Promise.all([
+      deleteTransactionsByIds(idsToDelete),
+      upsertTransactions(transactions),
+    ])
+      .then(() => refreshTransactions())
+      .catch((error) => {
+        console.error("Failed to replace transactions:", error);
+        throw error;
+      });
   };
 
   const setFilter = (
@@ -97,9 +135,12 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
       transactions.push(newTransaction);
     }
 
-    transactions.forEach((transaction) => {
-      dispatch({ type: "ADD_TRANSACTION", payload: transaction });
-    });
+    return upsertTransactions(transactions)
+      .then(() => refreshTransactions())
+      .catch((error) => {
+        console.error("Failed to add fixed expenses:", error);
+        throw error;
+      });
   };
 
   const value: BudgetContextValue = {
