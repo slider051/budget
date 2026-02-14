@@ -21,16 +21,18 @@ interface SubscriptionCardProps {
   subscription: Subscription;
   isLogoBroken: boolean;
   isMemoOpen: boolean;
+  isDeleting: boolean;
   onLogoError: (id: string) => void;
   onToggleMemo: (id: string) => void;
   onEdit: (subscription: Subscription) => void;
-  onDelete: (id: string) => void;
+  onDelete: () => void;
 }
 
 function SubscriptionCardComponent({
   subscription,
   isLogoBroken,
   isMemoOpen,
+  isDeleting,
   onLogoError,
   onToggleMemo,
   onEdit,
@@ -102,6 +104,7 @@ function SubscriptionCardComponent({
             size="sm"
             variant="outline"
             onClick={() => onEdit(subscription)}
+            disabled={isDeleting}
           >
             수정
           </Button>
@@ -109,9 +112,10 @@ function SubscriptionCardComponent({
             type="button"
             size="sm"
             variant="ghost"
-            onClick={() => onDelete(subscription.id)}
+            onClick={onDelete}
+            disabled={isDeleting}
           >
-            삭제
+            {isDeleting ? "삭제 중..." : "삭제"}
           </Button>
         </div>
       </div>

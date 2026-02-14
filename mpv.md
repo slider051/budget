@@ -1,50 +1,83 @@
-# MVP 0 배포 플랜 (오늘)
+# MVP 로드맵
 
-## 목표
-- Supabase로 유저 인증/가계부 데이터 관리
-- Google OAuth 로그인 적용
-- Vercel 배포 완료
+## MVP 0 상태 (2026-02-14)
+- 상태: 완료
+- 완료 범위:
+  1. Google OAuth 로그인/로그아웃
+  2. 인증 기반 라우트 보호
+  3. `transactions`, `monthly_budgets` Supabase 저장
+  4. `user_id` + RLS 정책 적용
+  5. Vercel 배포 + 환경변수 연결
+- 배포 후 확인 결과:
+  1. 로그인 정상
+  2. Supabase 테이블 저장 정상
 
-## 범위 (IN)
-1. Google 로그인/로그아웃
-2. 로그인 필수 라우트 보호
-3. `transactions`, `monthly_budgets` 테이블 생성
-4. `user_id` 기반 RLS 정책 적용
-5. 거래/예산 로컬스토리지 CRUD를 Supabase CRUD로 전환
-6. Vercel 환경변수/리다이렉트 설정 및 프로덕션 검증
+## MVP 1 목표
+- 운영 안정화 + 핵심 기능 2차 완성
+- localStorage 의존 제거 및 데이터 신뢰성 강화
+- 구독 기능(`subscriptions`)까지 DB 이관
 
-## 범위 (OUT)
-1. `subscriptions` DB 마이그레이션
-2. 백업/복원 고도화
-3. 차트, CSV/Excel, 고정지출 자동화
+## MVP 1 범위 (IN)
+1. `subscriptions` Supabase 마이그레이션
+2. 백업/복원 기능을 Supabase 데이터 기준으로 재검증
+3. 고정지출 자동 생성 배치(월 단위) 1차 도입
+4. 차트/분석 핵심 2종 추가 (월별 트렌드, 카테고리 비중)
+5. 운영 안전장치 추가 (에러 로깅, 입력 검증 강화)
 
-## 작업 순서
-1. Supabase 프로젝트 생성 및 Google Provider 활성화
-2. SQL 실행
-   - `transactions`, `monthly_budgets` 테이블
-   - 인덱스 및 `updated_at` 기본값
-   - RLS ON + `auth.uid() = user_id` 정책 (SELECT/INSERT/UPDATE/DELETE)
-3. Next.js에 Supabase 클라이언트 추가
-4. 인증 UI 구성 (로그인 버튼, 로그아웃 버튼, 세션 확인)
-5. 앱 페이지 접근 제어(비로그인 시 로그인 페이지로 이동)
-6. Repository 계층을 Supabase 기반으로 교체
-   - `storage.ts`
-   - `budgetRepository.ts`
-7. `.env.local` 정리
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-8. Vercel 배포
-   - 환경변수 등록
-   - Supabase Auth Redirect URL 등록
+## MVP 1 범위 (OUT)
+1. 팀 협업/공유 가계부
+2. 결제/유료 플랜
+3. 복잡한 통계 예측 기능
 
-## 완료 조건 (Definition of Done)
-1. Google 로그인 성공 후 세션 유지
-2. 거래/예산 생성/조회/수정/삭제가 DB에 반영
-3. 다른 계정 데이터 접근 차단(RLS 검증)
-4. 프로덕션 URL에서 동일 동작
+## MVP 1 작업 순서
+1. 데이터 계층 정리
+   - `subscriptions` 테이블 스키마 확정 + 인덱스 설계
+   - `user_id default auth.uid()` 적용
+   - `subscriptions` RLS 정책(본인 데이터만 SELECT/INSERT/UPDATE/DELETE)
+   - 기존 repository 패턴과 동일한 Supabase repository 작성
+   - 타입/DTO 정리
+2. 기능 이관
+   - 구독 CRUD를 DB 기반으로 전환
+   - 기존 localStorage fallback 제거
+   - 백업/복원 export/import 흐름 재검증(거래/예산/구독 전체)
+3. 자동화 기능
+   - 고정지출 월 자동 생성 로직 추가
+   - 중복 생성 방지 키 설계(예: `user_id + subscription_id + year_month` 유니크)
+   - 월 단위 배치 실행 경로 결정(크론/서버 액션/Edge Function)
+   - 실패/재시도 최소 처리
+4. 분석 고도화
+   - 월별 지출/수입 추이 차트
+   - 카테고리 지출 비중 차트
+   - 분석 쿼리/집계 성능 인덱스 점검
+5. 품질/운영
+   - 서버측 입력 검증 추가
+   - 에러 로깅 포인트 정의(로그인/CRUD/배치/차트)
+   - 프로덕션 시나리오 회귀 테스트 + 린트/빌드/배포
 
-## 보안 체크 (배포 전)
-1. 시크릿/키 하드코딩 금지
-2. RLS 없는 테이블 없음
-3. 에러 응답에 내부정보/토큰 노출 없음
-4. 로그에 민감정보 출력 없음
+## MVP 1 상세 체크리스트
+1. `subscriptions` 스키마/인덱스 확정 + `user_id default auth.uid()` 적용
+2. `subscriptions` RLS 정책(본인 데이터만 SELECT/INSERT/UPDATE/DELETE)
+3. Supabase Repository + 타입/DTO 정리
+4. 구독 CRUD DB 전환 + localStorage fallback 제거
+5. 백업/복원(Supabase 단일 소스: 거래/예산/구독) 재검증
+6. 고정지출 자동 생성 중복 방지 키(`user_id + subscription_id + year_month`) 확정
+7. 월 배치 실행 경로(크론/서버 액션/Edge Function) + 실패/재시도 처리
+8. 분석 2종 쿼리/집계 + 성능 인덱스 점검
+9. 서버측 입력 검증 + 에러 로깅 포인트(로그인/CRUD/배치/차트)
+10. 프로덕션 회귀 테스트 + 린트/빌드/배포 완료
+
+## MVP 1 Definition of Done
+1. `transactions`, `monthly_budgets`, `subscriptions` 모두 Supabase 단일 소스화
+2. 모든 사용자 데이터 접근이 RLS로 격리됨
+3. 프로덕션에서 다음 시나리오 통과
+   - 로그인
+   - 거래 CRUD
+   - 예산 CRUD
+   - 구독 CRUD
+   - 분석 페이지 로드
+4. 린트/빌드 통과 + 배포 완료
+
+## 권장 일정 (빠른 진행)
+1. Day 1: subscriptions DB 설계 + CRUD 이관
+2. Day 2: 고정지출 자동화 + 회귀 테스트
+3. Day 3: 차트 2종 + 운영 안정화 + 배포

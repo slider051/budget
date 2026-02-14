@@ -20,9 +20,8 @@ function getStoredPreset(): DashboardPresetId | null {
 
 export default function PresetBanner() {
   const { state, replaceTransactions } = useBudget();
-  const [lastAppliedPreset, setLastAppliedPreset] = useState<DashboardPresetId | null>(
-    () => getStoredPreset(),
-  );
+  const [lastAppliedPreset, setLastAppliedPreset] =
+    useState<DashboardPresetId | null>(() => getStoredPreset());
   const [message, setMessage] = useState<string>("");
   const [isApplying, setIsApplying] = useState(false);
 
@@ -34,7 +33,7 @@ export default function PresetBanner() {
   const handleApplyPreset = async (presetId: DashboardPresetId) => {
     try {
       setIsApplying(true);
-      const result = applyDashboardPreset(presetId, state.transactions);
+      const result = await applyDashboardPreset(presetId, state.transactions);
       await replaceTransactions(result.transactions);
       setLastAppliedPreset(presetId);
       setMessage(`${result.presetLabel} 프리셋을 적용했습니다.`);

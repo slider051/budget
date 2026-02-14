@@ -10,7 +10,6 @@ import type { Subscription } from "@/types/subscription";
 import {
   DASHBOARD_PRESETS,
   DASHBOARD_PRESET_STORAGE_KEY,
-  PRESET_SUBSCRIPTION_ID_PREFIX,
   PRESET_TRANSACTION_PREFIX,
   type DashboardPresetId,
 } from "./dashboardPresets";
@@ -67,7 +66,7 @@ function buildPresetSubscription(
   const preset = DASHBOARD_PRESETS[presetId];
 
   return {
-    id: `${PRESET_SUBSCRIPTION_ID_PREFIX}${presetId}-${service.key}`,
+    id: crypto.randomUUID(),
     serviceKey: service.key,
     serviceName: service.name,
     category: service.category,
@@ -94,26 +93,32 @@ function buildPresetSubscription(
   };
 }
 
-function replacePresetSubscriptions(presetId: DashboardPresetId): void {
-  const existing = listSubscriptions();
-  existing
-    .filter((subscription) =>
-      subscription.id.startsWith(PRESET_SUBSCRIPTION_ID_PREFIX),
-    )
-    .forEach((subscription) => {
-      deleteSubscription(subscription.id);
-    });
+async function replacePresetSubscriptions(
+  presetId: DashboardPresetId,
+): Promise<void> {
+  const existing = await listSubscriptions();
+  const presetMemoPrefix = `${PRESET_TRANSACTION_PREFIX}:`;
+  const existingPresetItems = existing.filter((subscription) =>
+    subscription.memo.startsWith(presetMemoPrefix),
+  );
 
-  DASHBOARD_PRESETS[presetId].subscriptionKeys.forEach((key) => {
-    const next = buildPresetSubscription(presetId, key);
-    if (next) upsertSubscription(next);
-  });
+  await Promise.all(
+    existingPresetItems.map((subscription) =>
+      deleteSubscription(subscription.id),
+    ),
+  );
+
+  const nextSubscriptions = DASHBOARD_PRESETS[presetId].subscriptionKeys
+    .map((key) => buildPresetSubscription(presetId, key))
+    .filter((item): item is Subscription => item !== null);
+
+  await Promise.all(nextSubscriptions.map((item) => upsertSubscription(item)));
 }
 
-export function applyDashboardPreset(
+export async function applyDashboardPreset(
   presetId: DashboardPresetId,
   currentTransactions: readonly Transaction[],
-): ApplyPresetResult {
+): Promise<ApplyPresetResult> {
   const preset = DASHBOARD_PRESETS[presetId];
 
   const filteredTransactions = currentTransactions.filter(
@@ -126,10 +131,8 @@ export function applyDashboardPreset(
     buildPresetIncomeTransaction(presetId),
   ];
 
-  void upsertBudget(getCurrentMonth(), { ...preset.budgets }).catch((error) => {
-    console.error("Failed to apply preset budget:", error);
-  });
-  replacePresetSubscriptions(presetId);
+  await upsertBudget(getCurrentMonth(), { ...preset.budgets });
+  await replacePresetSubscriptions(presetId);
 
   if (typeof window !== "undefined") {
     localStorage.setItem(DASHBOARD_PRESET_STORAGE_KEY, presetId);

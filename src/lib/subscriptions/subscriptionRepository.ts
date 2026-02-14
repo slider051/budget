@@ -1,8 +1,6 @@
 import { SUBSCRIPTIONS_STORAGE_KEY } from "@/lib/constants";
-import {
-  createLocalStorageStore,
-  notifyStorageChange,
-} from "@/lib/storage/localStorageStore";
+import { notifyStorageChange } from "@/lib/storage/localStorageStore";
+import { createClient } from "@/lib/supabase/client";
 import type {
   BillingCycle,
   Subscription,
@@ -28,6 +26,33 @@ const VALID_BILLING_CYCLES: readonly BillingCycle[] = [
   "yearly",
 ];
 
+interface SubscriptionRow {
+  id: string;
+  service_key: string;
+  service_name: string;
+  category: SubscriptionCategory;
+  logo_url: string;
+  default_price: number;
+  actual_price: number;
+  participant_count: number;
+  currency: SubscriptionCurrency;
+  billing_cycle: BillingCycle;
+  custom_cycle_months: number | null;
+  billing_start_date: string;
+  end_date: string | null;
+  account_name: string;
+  memo: string;
+  created_at: string;
+  updated_at: string;
+  base_price: number | null;
+  billing_anchor_date: string | null;
+  expected_end_date: string | null;
+  custom_cycle_end_date: string | null;
+  custom_cycle_days: number | null;
+  auto_renew: boolean | null;
+  accounts: Subscription["accounts"] | null;
+}
+
 function getNowDate(): string {
   return new Date().toISOString().split("T")[0];
 }
@@ -37,7 +62,16 @@ function getNowIso(): string {
 }
 
 function parseNumber(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const num = Number(value);
+    if (Number.isFinite(num)) return num;
+  }
+
+  return null;
 }
 
 function parseString(value: unknown): string | null {
@@ -52,7 +86,10 @@ function parseDateString(value: unknown): string | null {
 function toId(value: unknown): string {
   const parsed = parseString(value);
   if (parsed && parsed.trim()) return parsed;
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return `sub-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
@@ -130,8 +167,14 @@ function deriveAccountName(source: Record<string, unknown>): string {
   if (accountName && accountName.trim()) return accountName.trim();
 
   const legacyAccounts = Array.isArray(source.accounts) ? source.accounts : [];
-  if (legacyAccounts.length > 0 && legacyAccounts[0] && typeof legacyAccounts[0] === "object") {
-    const alias = parseString((legacyAccounts[0] as Record<string, unknown>).alias);
+  if (
+    legacyAccounts.length > 0 &&
+    legacyAccounts[0] &&
+    typeof legacyAccounts[0] === "object"
+  ) {
+    const alias = parseString(
+      (legacyAccounts[0] as Record<string, unknown>).alias,
+    );
     if (alias && alias.trim()) return alias.trim();
   }
 
@@ -179,6 +222,78 @@ function deriveParticipantCount(source: Record<string, unknown>): number {
   if (legacyAccounts.length > 0) return legacyAccounts.length;
 
   return 1;
+}
+
+function mapRowToSubscription(row: SubscriptionRow): Subscription {
+  return {
+    id: row.id,
+    serviceKey: row.service_key,
+    serviceName: row.service_name,
+    category: row.category,
+    logoUrl: row.logo_url,
+    defaultPrice: Number(row.default_price),
+    actualPrice: Number(row.actual_price),
+    participantCount: row.participant_count,
+    currency: row.currency,
+    billingCycle: row.billing_cycle,
+    customCycleMonths: row.custom_cycle_months,
+    billingStartDate: row.billing_start_date,
+    endDate: row.end_date,
+    accountName: row.account_name,
+    memo: row.memo,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    basePrice: row.base_price ?? undefined,
+    billingAnchorDate: row.billing_anchor_date ?? undefined,
+    expectedEndDate: row.expected_end_date ?? undefined,
+    customCycleEndDate: row.custom_cycle_end_date ?? undefined,
+    customCycleDays: row.custom_cycle_days ?? undefined,
+    autoRenew: row.auto_renew ?? undefined,
+    accounts: row.accounts ?? undefined,
+  };
+}
+
+function mapSubscriptionToRow(subscription: Subscription) {
+  return {
+    id: subscription.id,
+    service_key: subscription.serviceKey,
+    service_name: subscription.serviceName,
+    category: subscription.category,
+    logo_url: subscription.logoUrl,
+    default_price: subscription.defaultPrice,
+    actual_price: subscription.actualPrice,
+    participant_count: subscription.participantCount,
+    currency: subscription.currency,
+    billing_cycle: subscription.billingCycle,
+    custom_cycle_months: subscription.customCycleMonths,
+    billing_start_date: subscription.billingStartDate,
+    end_date: subscription.endDate,
+    account_name: subscription.accountName,
+    memo: subscription.memo,
+    created_at: subscription.createdAt,
+    updated_at: subscription.updatedAt,
+    base_price: subscription.basePrice ?? null,
+    billing_anchor_date: subscription.billingAnchorDate ?? null,
+    expected_end_date: subscription.expectedEndDate ?? null,
+    custom_cycle_end_date: subscription.customCycleEndDate ?? null,
+    custom_cycle_days: subscription.customCycleDays ?? null,
+    auto_renew: subscription.autoRenew ?? null,
+    accounts: subscription.accounts ?? null,
+  };
+}
+
+function syncSubscriptionCache(subscriptions: readonly Subscription[]): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    localStorage.setItem(
+      SUBSCRIPTIONS_STORAGE_KEY,
+      JSON.stringify(subscriptions),
+    );
+    notifyStorageChange(SUBSCRIPTIONS_STORAGE_KEY);
+  } catch (error) {
+    console.error("Failed to sync subscriptions cache:", error);
+  }
 }
 
 export function normalizeSubscriptionRecord(raw: unknown): Subscription | null {
@@ -235,7 +350,55 @@ export function normalizeSubscriptionRecord(raw: unknown): Subscription | null {
   };
 }
 
-function parseSubscriptions(raw: string): readonly Subscription[] {
+export async function listSubscriptions(): Promise<readonly Subscription[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select(
+      "id,service_key,service_name,category,logo_url,default_price,actual_price,participant_count,currency,billing_cycle,custom_cycle_months,billing_start_date,end_date,account_name,memo,created_at,updated_at,base_price,billing_anchor_date,expected_end_date,custom_cycle_end_date,custom_cycle_days,auto_renew,accounts",
+    )
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const subscriptions = ((data ?? []) as SubscriptionRow[]).map(
+    mapRowToSubscription,
+  );
+  syncSubscriptionCache(subscriptions);
+  return subscriptions;
+}
+
+export async function upsertSubscription(
+  nextSubscription: Subscription,
+): Promise<readonly Subscription[]> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("subscriptions")
+    .upsert(mapSubscriptionToRow(nextSubscription), { onConflict: "id" });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return listSubscriptions();
+}
+
+export async function deleteSubscription(
+  id: string,
+): Promise<readonly Subscription[]> {
+  const supabase = createClient();
+  const { error } = await supabase.from("subscriptions").delete().eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return listSubscriptions();
+}
+
+export function parseSubscriptions(raw: string): readonly Subscription[] {
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return fallback;
@@ -244,49 +407,5 @@ function parseSubscriptions(raw: string): readonly Subscription[] {
       .filter((item): item is Subscription => item !== null);
   } catch {
     return fallback;
-  }
-}
-
-export const subscriptionStore = createLocalStorageStore<readonly Subscription[]>(
-  SUBSCRIPTIONS_STORAGE_KEY,
-  parseSubscriptions,
-  fallback,
-);
-
-export function listSubscriptions(): readonly Subscription[] {
-  return subscriptionStore.getSnapshot();
-}
-
-export function upsertSubscription(nextSubscription: Subscription): void {
-  if (typeof window === "undefined") return;
-
-  try {
-    const current = listSubscriptions();
-    const index = current.findIndex((item) => item.id === nextSubscription.id);
-
-    const next =
-      index >= 0
-        ? current.map((item) =>
-            item.id === nextSubscription.id ? nextSubscription : item,
-          )
-        : [...current, nextSubscription];
-
-    localStorage.setItem(SUBSCRIPTIONS_STORAGE_KEY, JSON.stringify(next));
-    notifyStorageChange(SUBSCRIPTIONS_STORAGE_KEY);
-  } catch (error) {
-    console.error("Failed to upsert subscription:", error);
-  }
-}
-
-export function deleteSubscription(id: string): void {
-  if (typeof window === "undefined") return;
-
-  try {
-    const current = listSubscriptions();
-    const next = current.filter((item) => item.id !== id);
-    localStorage.setItem(SUBSCRIPTIONS_STORAGE_KEY, JSON.stringify(next));
-    notifyStorageChange(SUBSCRIPTIONS_STORAGE_KEY);
-  } catch (error) {
-    console.error("Failed to delete subscription:", error);
   }
 }

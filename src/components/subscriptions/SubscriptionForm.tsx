@@ -23,6 +23,7 @@ interface SubscriptionFormProps {
   previewCycleLabel: string;
   previewDateLabel: string;
   previewDate: string | null;
+  isSubmitting: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onReset: () => void;
   onPresetChange: (serviceKey: string) => void;
@@ -37,6 +38,7 @@ export function SubscriptionForm({
   previewCycleLabel,
   previewDateLabel,
   previewDate,
+  isSubmitting,
   onSubmit,
   onReset,
   onPresetChange,
@@ -340,7 +342,13 @@ export function SubscriptionForm({
       </div>
 
       <div className="flex items-center gap-3">
-        <Button type="submit">{editingId ? "구독 업데이트" : "구독 추가"}</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting
+            ? "저장 중..."
+            : editingId
+              ? "구독 업데이트"
+              : "구독 추가"}
+        </Button>
       </div>
     </form>
   );

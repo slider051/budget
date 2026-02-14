@@ -53,13 +53,21 @@ function createPreviewSubscription(form: SubscriptionFormState): Subscription {
 }
 
 export default function SubscriptionsPage() {
-  const { subscriptions, upsertSubscription, deleteSubscription } =
-    useSubscriptions();
+  const {
+    subscriptions,
+    isLoading,
+    error: loadError,
+    upsertSubscription,
+    deleteSubscription,
+  } = useSubscriptions();
+
   const [form, setForm] = useState<SubscriptionFormState>(createInitialFormState);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<Record<string, boolean>>({});
   const [memoOpenMap, setMemoOpenMap] = useState<Record<string, boolean>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const summary = useMemo(
     () => summarizeByCurrency(subscriptions),
@@ -140,7 +148,7 @@ export default function SubscriptionsPage() {
   }, []);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
       setErrorMessage(null);
 
@@ -208,7 +216,6 @@ export default function SubscriptionsPage() {
         memo: form.memo.trim(),
         createdAt: existing?.createdAt ?? timestamp,
         updatedAt: timestamp,
-        // legacy compatibility
         basePrice: parsedDefaultPrice,
         billingAnchorDate: form.billingStartDate,
         expectedEndDate: form.endDate || null,
@@ -218,10 +225,37 @@ export default function SubscriptionsPage() {
         accounts: undefined,
       };
 
-      upsertSubscription(nextSubscription);
-      resetForm();
+      try {
+        setIsSubmitting(true);
+        await upsertSubscription(nextSubscription);
+        resetForm();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "구독 저장에 실패했습니다.";
+        setErrorMessage(message);
+      } finally {
+        setIsSubmitting(false);
+      }
     },
     [editingId, form, resetForm, subscriptions, upsertSubscription],
+  );
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!confirm("이 구독을 삭제하시겠습니까?")) {
+        return;
+      }
+
+      try {
+        setDeletingId(id);
+        await deleteSubscription(id);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "구독 삭제에 실패했습니다.";
+        setErrorMessage(message);
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [deleteSubscription],
   );
 
   return (
@@ -234,6 +268,12 @@ export default function SubscriptionsPage() {
           결제 가격과 사용자 수를 기준으로 실제 부담 금액/다음 결제일을 추적합니다.
         </p>
       </div>
+
+      {loadError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {loadError}
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(["KRW", "USD", "JPY"] as const).map((currency) => (
@@ -264,6 +304,7 @@ export default function SubscriptionsPage() {
           onReset={resetForm}
           onPresetChange={handlePresetChange}
           setForm={setForm}
+          isSubmitting={isSubmitting}
         />
       </Card>
 
@@ -278,7 +319,13 @@ export default function SubscriptionsPage() {
             </p>
           </div>
 
-          {sortedSubscriptions.length === 0 && (
+          {isLoading && (
+            <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              구독 데이터를 불러오는 중입니다...
+            </div>
+          )}
+
+          {!isLoading && sortedSubscriptions.length === 0 && (
             <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
               아직 등록된 구독이 없습니다.
             </div>
@@ -293,7 +340,11 @@ export default function SubscriptionsPage() {
               onLogoError={handleLogoError}
               onToggleMemo={handleToggleMemo}
               onEdit={handleEdit}
-              onDelete={deleteSubscription}
+              onDelete={() => {
+                if (deletingId) return;
+                void handleDelete(subscription.id);
+              }}
+              isDeleting={deletingId === subscription.id}
             />
           ))}
         </div>
