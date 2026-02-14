@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { hasSupabaseEnv } from "./env";
 
 const PUBLIC_PATHS = ["/login", "/auth/callback"];
+const AUTH_BYPASS_PATHS = ["/api/cron"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(
@@ -18,6 +19,18 @@ function getSafeNext(pathname: string, search: string): string {
 
 export async function updateSession(request: NextRequest) {
   if (!hasSupabaseEnv()) {
+    return NextResponse.next({
+      request,
+    });
+  }
+
+  const { pathname, search } = request.nextUrl;
+  const shouldBypassAuth = AUTH_BYPASS_PATHS.some(
+    (publicPath) =>
+      pathname === publicPath || pathname.startsWith(`${publicPath}/`),
+  );
+
+  if (shouldBypassAuth) {
     return NextResponse.next({
       request,
     });
@@ -56,7 +69,6 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname, search } = request.nextUrl;
   const isPublic = isPublicPath(pathname);
 
   if (!user && !isPublic) {
