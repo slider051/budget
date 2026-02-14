@@ -62,6 +62,14 @@ export const SUBSCRIPTION_PRESETS: readonly SubscriptionPreset[] = [
     logoUrl: "https://logo.clearbit.com/wavve.com",
   },
   {
+    key: "apple-tv-plus",
+    name: "Apple TV+",
+    category: "ott",
+    defaultPrice: 6500,
+    currency: "KRW",
+    logoUrl: "https://logo.clearbit.com/apple.com",
+  },
+  {
     key: "grok",
     name: "Grok",
     category: "ai",
@@ -92,6 +100,14 @@ export const SUBSCRIPTION_PRESETS: readonly SubscriptionPreset[] = [
     defaultPrice: 20,
     currency: "USD",
     logoUrl: "https://logo.clearbit.com/cursor.com",
+  },
+  {
+    key: "claude",
+    name: "Claude",
+    category: "ai",
+    defaultPrice: 22,
+    currency: "USD",
+    logoUrl: "https://logo.clearbit.com/anthropic.com",
   },
   {
     key: "naver-membership",

@@ -5,79 +5,124 @@
 - 완료 범위:
   1. Google OAuth 로그인/로그아웃
   2. 인증 기반 라우트 보호
-  3. `transactions`, `monthly_budgets` Supabase 저장
+  3. `transactions`, `monthly_budgets`, `subscriptions` Supabase 저장
   4. `user_id` + RLS 정책 적용
   5. Vercel 배포 + 환경변수 연결
-- 배포 후 확인 결과:
-  1. 로그인 정상
-  2. Supabase 테이블 저장 정상
 
-## MVP 1 목표
-- 운영 안정화 + 핵심 기능 2차 완성
-- localStorage 의존 제거 및 데이터 신뢰성 강화
-- 구독 기능(`subscriptions`)까지 DB 이관
+## MVP 1 필승을 위한 핵심 체크리스트 Top 10
+타협은 없다. 아래 10개를 통과하지 못하면 프로덕션 승급 금지.
 
-## MVP 1 범위 (IN)
-1. `subscriptions` Supabase 마이그레이션
-2. 백업/복원 기능을 Supabase 데이터 기준으로 재검증
-3. 고정지출 자동 생성 배치(월 단위) 1차 도입
-4. 차트/분석 핵심 2종 추가 (월별 트렌드, 카테고리 비중)
-5. 운영 안전장치 추가 (에러 로깅, 입력 검증 강화)
+### 데이터 무결성 & 보안
+1. RLS 철벽 방어
+- `subscriptions` RLS가 완전 적용되어, API 직접 호출로도 타 유저 데이터 접근 불가.
 
-## MVP 1 범위 (OUT)
-1. 팀 협업/공유 가계부
-2. 결제/유료 플랜
-3. 복잡한 통계 예측 기능
+2. 배치 멱등성(Idempotency)
+- 자동 생성 배치가 연속 재실행되어도 월별 고정 지출은 정확히 1회만 생성.
+- `UNIQUE(user_id, subscription_id, year_month)` 등 유니크 제약 필수.
 
-## MVP 1 작업 순서
-1. 데이터 계층 정리
-   - `subscriptions` 테이블 스키마 확정 + 인덱스 설계
-   - `user_id default auth.uid()` 적용
-   - `subscriptions` RLS 정책(본인 데이터만 SELECT/INSERT/UPDATE/DELETE)
-   - 기존 repository 패턴과 동일한 Supabase repository 작성
-   - 타입/DTO 정리
-2. 기능 이관
-   - 구독 CRUD를 DB 기반으로 전환
-   - 기존 localStorage fallback 제거
-   - 백업/복원 export/import 흐름 재검증(거래/예산/구독 전체)
-3. 자동화 기능
-   - 고정지출 월 자동 생성 로직 추가
-   - 중복 생성 방지 키 설계(예: `user_id + subscription_id + year_month` 유니크)
-   - 월 단위 배치 실행 경로 결정(크론/서버 액션/Edge Function)
-   - 실패/재시도 최소 처리
-4. 분석 고도화
-   - 월별 지출/수입 추이 차트
-   - 카테고리 지출 비중 차트
-   - 분석 쿼리/집계 성능 인덱스 점검
-5. 품질/운영
-   - 서버측 입력 검증 추가
-   - 에러 로깅 포인트 정의(로그인/CRUD/배치/차트)
-   - 프로덕션 시나리오 회귀 테스트 + 린트/빌드/배포
+3. 쓰레기 데이터 차단
+- 음수 금액, 잘못된 날짜, 잘못된 billing_cycle 조합을 DB Check Constraint에서 차단.
 
-## MVP 1 상세 체크리스트
-1. `subscriptions` 스키마/인덱스 확정 + `user_id default auth.uid()` 적용
-2. `subscriptions` RLS 정책(본인 데이터만 SELECT/INSERT/UPDATE/DELETE)
-3. Supabase Repository + 타입/DTO 정리
-4. 구독 CRUD DB 전환 + localStorage fallback 제거
-5. 백업/복원(Supabase 단일 소스: 거래/예산/구독) 재검증
-6. 고정지출 자동 생성 중복 방지 키(`user_id + subscription_id + year_month`) 확정
-7. 월 배치 실행 경로(크론/서버 액션/Edge Function) + 실패/재시도 처리
-8. 분석 2종 쿼리/집계 + 성능 인덱스 점검
-9. 서버측 입력 검증 + 에러 로깅 포인트(로그인/CRUD/배치/차트)
-10. 프로덕션 회귀 테스트 + 린트/빌드/배포 완료
+### 성능 & 아키텍처
+4. 잔재 완전 소각
+- localStorage fallback/중복 저장 경로 제거.
+- 캐시 목적 외 localStorage write 금지.
 
-## MVP 1 Definition of Done
-1. `transactions`, `monthly_budgets`, `subscriptions` 모두 Supabase 단일 소스화
-2. 모든 사용자 데이터 접근이 RLS로 격리됨
-3. 프로덕션에서 다음 시나리오 통과
-   - 로그인
-   - 거래 CRUD
-   - 예산 CRUD
-   - 구독 CRUD
-   - 분석 페이지 로드
-4. 린트/빌드 통과 + 배포 완료
+5. N+1 쿼리 폭격 방지
+- 분석 차트는 단일 집계 쿼리(조인/뷰/materialized view) 중심으로 구성.
 
-## 권장 일정 (빠른 진행)
-1. Day 1: subscriptions DB 설계 + CRUD 이관
-2. Day 2: 고정지출 자동화 + 회귀 테스트
-3. Day 3: 차트 2종 + 운영 안정화 + 배포
+6. 비동기 상태 관리
+- 로딩/오류/재시도/낙관적 업데이트가 UI에 명확히 반영.
+
+### 자동화 & 운영
+7. 크론 신뢰성
+- Vercel Cron 또는 Supabase Edge Function 트리거가 정시 1회 실행됨을 테스트에서 검증.
+
+8. 실시간 알림(Alerting)
+- 배치 실패/DB 타임아웃을 콘솔에서 끝내지 않고 Slack/Discord/문자/푸시로 즉시 알림.
+
+### 사용자 경험 & 배포
+9. 트랜잭션 안전성
+- 수정 중 네트워크 실패 시 반쪽 저장 없이 원자성 보장(롤백 또는 보상 처리).
+
+10. 무중단 회귀 테스트
+- MVP 1 배포 시 기존 MVP 0 사용자 세션 유지 + 핵심 기능 회귀 통과.
+
+## 현재 갭 점검 (2026-02-14)
+- [부분 충족] 1번 RLS: 테이블 정책은 적용됨. API 경계/권한 테스트 자동화는 부족.
+- [미충족] 2번 멱등성: 월 자동 생성 배치/유니크 키 아직 없음.
+- [부분 충족] 3번 DB 검증: 기본 제약은 있으나 배치/신규 테이블 제약 추가 필요.
+- [미충족] 4번 localStorage 제거: `backupRepository`, `storage.ts`, `alerts` 등 잔재 존재.
+- [미충족] 5번 단일 집계 쿼리: 분석은 클라이언트 계산 위주.
+- [부분 충족] 6번 비동기 UX: subscriptions는 반영됨, 전 영역 통일 필요.
+- [미충족] 7번 크론 검증: 미구현.
+- [미충족] 8번 실시간 알림: 콘솔 로그 중심.
+- [부분 충족] 9번 트랜잭션 안전성: 일부 비동기 처리만 있음, 원자적 서버 처리 부족.
+- [부분 충족] 10번 무중단 회귀: 수동 확인 수준, 자동 회귀 테스트 부족.
+
+## MVP 1.5 완료 체크리스트 (<=10)
+1. `subscriptions` 제약/인덱스 적용
+- SQL 마이그레이션 + 롤백 스크립트 쌍으로 관리.
+
+2. `generated_charges`(또는 `runs`) 테이블 생성
+- `UNIQUE(user_id, subscription_id, year_month)` 적용.
+- 월 조회/실행 이력 조회용 인덱스 추가.
+
+3. `transactions` 중복 방지 최종 방어
+- 자동 생성 거래에 `generation_key`(또는 `subscription_id + year_month`) 컬럼 추가.
+- DB 유니크 제약으로 중복 삽입 차단.
+
+4. 멱등 배치 함수(RPC) 구현
+- 재실행 5회 테스트에서 upsert/no-op 보장.
+- 실패 시 재시도해도 결과 동일해야 함.
+
+5. 배치 실행 경로/시간 기준 확정
+- 권장 경로: `Vercel Cron -> API Route -> Supabase RPC`.
+- `Asia/Seoul` 기준 월 경계(말일 23:59~익월 00:01) 테스트 통과.
+
+6. localStorage fallback 제거
+- 허용 목록: 테마/UI 설정만 유지.
+- 그 외 사용 금지 영역은 lint 규칙으로 강제.
+
+7. 분석 집계 서버화
+- 월별/카테고리 집계를 View 또는 RPC로 이전.
+- RLS/권한 검증 + 성능 인덱스 점검 포함.
+
+8. 서버 입력 검증 통합
+- Zod 검증 + DB 제약 이중 방어.
+- 에러 메시지는 사용자용/로그용 분리 매핑.
+
+9. Slack 알림 연결
+- 실패/지연/중복탐지 이벤트 알림.
+- severity 기준(critical/error/warn)과 라우팅 채널 정의.
+
+10. 회귀 테스트 자동화 + 배포 게이트
+- 로그인/세션/CRUD/배치/분석 시나리오 자동화.
+- `PASS 증빙 템플릿`(테스트 로그, SQL 링크, 스크린샷)으로 승급 판단.
+
+## MVP 1.5 실행 플랜
+
+### Phase 1: DB 방어선
+1. `subscriptions` 마이그레이션/롤백 스크립트 정리
+2. `generated_charges` 테이블 + 유니크/인덱스 추가
+3. `transactions.generation_key` 추가 + 유니크 제약 적용
+
+### Phase 2: 배치 멱등성
+4. Supabase RPC(월 자동 생성) 구현
+5. Cron API 라우트 연결 + `Asia/Seoul` 경계 테스트
+
+### Phase 3: 아키텍처/성능
+6. localStorage fallback 제거 + lint 금지 규칙
+7. 분석 집계 View/RPC 서버화 + RLS/인덱스 검증
+
+### Phase 4: 운영/게이트
+8. Zod + DB 제약 에러 매핑 정리
+9. Slack 알림(severity/route) 연결
+10. 회귀 자동화 + PASS 증빙 템플릿 운영
+
+## MVP 1.5 Definition of Done
+1. Top 10 항목 전부 PASS 증빙(테스트 로그/스크린샷/SQL 링크).
+2. 배치 멱등성 검증 완료(동일 월 5회 재실행 테스트 PASS).
+3. localStorage fallback 제거 완료(허용 목록 외 lint 차단).
+4. 알림 채널 실운영 연결 완료.
+5. 린트/빌드/회귀 테스트 통과 + PASS 증빙 템플릿 첨부 후 배포.
