@@ -155,3 +155,4 @@
 - 2026-02-15 note: Discord webhook configured; waiting for next scheduled vercel-cron auto-run verification.
 - 2026-02-15 note: Alerts are set and waiting for the next Vercel Cron automatic execution log.
 - 2026-02-15 note: Added automated regression gate (`npm run gate:regression`) and PASS evidence template (`PASS_EVIDENCE_TEMPLATE.md`).
+- 2026-02-15 note: Added WAF 24h evidence template (`WAF_24H_EVIDENCE_TEMPLATE.md`) and security path-filter tests (`npm run test:security`).

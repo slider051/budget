@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isApiPath, isSuspiciousApiPath } from "./pathGuard";
 
 interface RateLimitRule {
   readonly bucket: "api" | "cron";
@@ -21,21 +22,6 @@ const DEFAULT_API_MAX = 60;
 const DEFAULT_CRON_MAX = 10;
 const GC_INTERVAL_MS = 5 * 60_000;
 const STALE_ENTRY_TTL_MS = 10 * 60_000;
-
-const suspiciousPathPatterns = [
-  /\/\.env(?:\.|$)/i,
-  /\/\.git(?:\/|$)/i,
-  /wp-admin/i,
-  /wp-login/i,
-  /xmlrpc\.php/i,
-  /phpmyadmin/i,
-  /\.php(?:\/|$)/i,
-  /cgi-bin/i,
-  /\.\./,
-  /%2e%2e/i,
-  /%2f%2e/i,
-  /%5c/i,
-];
 
 function parsePositiveInt(value: string | undefined, fallback: number): number {
   if (!value) return fallback;
@@ -100,25 +86,6 @@ function logBlockedRequest(
     ua: getUserAgent(request),
     ...detail,
   });
-}
-
-function isApiPath(pathname: string): boolean {
-  return pathname === "/api" || pathname.startsWith("/api/");
-}
-
-function safeDecode(value: string): string {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
-function isSuspiciousApiPath(pathname: string): boolean {
-  const decoded = safeDecode(pathname);
-  return suspiciousPathPatterns.some(
-    (pattern) => pattern.test(pathname) || pattern.test(decoded),
-  );
 }
 
 function getRateLimitRule(pathname: string): RateLimitRule {
