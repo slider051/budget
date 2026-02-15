@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test:kst": "node --test tests/kst-year-month.test.ts"
   },
   "keywords": [],
   "author": "",

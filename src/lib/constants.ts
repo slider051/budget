@@ -45,7 +45,3 @@ export const CATEGORY_EN_NAMES: Record<string, string> = {
 };
 
 export const DEFAULT_CURRENCY = "KRW";
-
-export const STORAGE_KEY = "budget_tracker_data";
-export const BUDGET_STORAGE_KEY = "budget_tracker_budgets";
-export const SUBSCRIPTIONS_STORAGE_KEY = "budget_tracker_subscriptions";

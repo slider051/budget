@@ -18,9 +18,9 @@ export default function SettingsPage() {
   } | null>(null);
   const [isImporting, setIsImporting] = useState(false);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
-      downloadBackup();
+      await downloadBackup();
       setMessage({
         type: "success",
         text: "백업 파일이 다운로드되었습니다",
@@ -43,7 +43,7 @@ export default function SettingsPage() {
 
     try {
       const text = await file.text();
-      const result = importBackup(text, importMode);
+      const result = await importBackup(text, importMode);
 
       if (result.success) {
         setMessage({

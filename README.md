@@ -13,7 +13,7 @@
   - 데이터 백업/복원 (JSON)
   - 구독관리 (진행 중)
   - 다크모드 (system/light/dark)
-- **데이터 저장**: localStorage (SSR 안전, 추상화 인터페이스)
+- **데이터 저장**: Supabase (`transactions`, `monthly_budgets`, `subscriptions`) + localStorage(테마/프리셋 UI 설정만)
 - **아키텍처**: 불변성 보장, Server Components 기본, Context+Reducer 상태관리
 
 ## 실행 방법
@@ -26,6 +26,13 @@ npm run lint      # ESLint 검사
 npm run lint:fix  # ESLint 자동 수정
 ```
 
+## 운영 보안 환경변수
+
+- `CRON_SECRET` (필수): `/api/cron/*` 호출 인증 토큰
+- `API_RATE_LIMIT_WINDOW_MS` (선택, 기본 `60000`): `/api/*` 레이트리밋 윈도우(ms)
+- `API_RATE_LIMIT_MAX` (선택, 기본 `60`): `/api/*` 윈도우당 허용 요청 수
+- `CRON_RATE_LIMIT_MAX` (선택, 기본 `10`): `/api/cron/*` 윈도우당 허용 요청 수
+
 ## 최근 추가된 기능
 
 ### 거래내역 필터링 (IME 안정화)
@@ -37,7 +44,7 @@ npm run lint:fix  # ESLint 자동 수정
 ### 예산 관리
 - 카테고리별 예산 설정
 - 90% 초과 시 알림 표시
-- localStorage 기반 알림 해제 기록
+- 알림 해제 상태는 세션 중 메모리 상태로 관리
 
 ### 데이터 관리
 - 백업 다운로드 (JSON)

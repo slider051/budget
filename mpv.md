@@ -80,7 +80,7 @@
 - 권장 경로: `Vercel Cron -> API Route -> Supabase RPC`.
 - `Asia/Seoul` 기준 월 경계(말일 23:59~익월 00:01) 테스트 통과.
 
-6. [ ] localStorage fallback 제거
+6. [x] localStorage fallback 제거
 - 허용 목록: 테마/UI 설정만 유지.
 - 그 외 사용 금지 영역은 lint 규칙으로 강제.
 
@@ -100,16 +100,20 @@
 - 로그인/세션/CRUD/배치/분석 시나리오 자동화.
 - `PASS 증빙 템플릿`(테스트 로그, SQL 링크, 스크린샷)으로 승급 판단.
 
-## 진행 현황 (2026-02-14)
+## 진행 현황 (2026-02-15)
 - 완료:
   1. Phase 1 SQL 적용(`subscriptions` 제약/인덱스, `generated_charges`, `transactions.generation_key`)
   2. Phase 2 RPC 적용(`run_monthly_subscription_generation`)
   3. 멱등성 검증 통과(동일 월 5회 실행 결과 `created=0, skipped=3, total=3`)
   4. 중복 최종 검증 통과(`generation_key` 중복 조회 0행)
+  5. 봇 대응 1차 적용(`/api/*` 레이트리밋 + 비정상 경로 시그니처 필터)
+  6. `Asia/Seoul` 월 경계 단위 테스트 추가(`test:kst`)
+  7. Phase 3 1차 완료(localStorage 데이터 fallback 제거 + lint 차단)
 - 다음 작업:
   1. `Vercel Cron -> API -> RPC` 연결
-  2. `Asia/Seoul` 월 경계 테스트
-  3. Phase 3(localStorage 제거/분석 서버화) 착수
+  2. Vercel Cron 자동 실행 로그 확인
+  3. 분석 집계 서버화(View/RPC) 설계 및 구현
+  4. Vercel WAF 룰셋(대시보드) 적용 및 운영 로그 기반 튜닝
 
 ## MVP 1.5 실행 플랜
 
@@ -123,7 +127,7 @@
 5. [ ] Cron API 라우트 연결 + `Asia/Seoul` 경계 테스트
 
 ### Phase 3: 아키텍처/성능
-6. [ ] localStorage fallback 제거 + lint 금지 규칙
+6. [x] localStorage fallback 제거 + lint 금지 규칙
 7. [ ] 분석 집계 View/RPC 서버화 + RLS/인덱스 검증
 
 ### Phase 4: 운영/게이트

@@ -1,5 +1,3 @@
-import { SUBSCRIPTIONS_STORAGE_KEY } from "@/lib/constants";
-import { notifyStorageChange } from "@/lib/storage/localStorageStore";
 import { createClient } from "@/lib/supabase/client";
 import type {
   BillingCycle,
@@ -282,20 +280,6 @@ function mapSubscriptionToRow(subscription: Subscription) {
   };
 }
 
-function syncSubscriptionCache(subscriptions: readonly Subscription[]): void {
-  if (typeof window === "undefined") return;
-
-  try {
-    localStorage.setItem(
-      SUBSCRIPTIONS_STORAGE_KEY,
-      JSON.stringify(subscriptions),
-    );
-    notifyStorageChange(SUBSCRIPTIONS_STORAGE_KEY);
-  } catch (error) {
-    console.error("Failed to sync subscriptions cache:", error);
-  }
-}
-
 export function normalizeSubscriptionRecord(raw: unknown): Subscription | null {
   if (!raw || typeof raw !== "object") return null;
   const source = raw as Record<string, unknown>;
@@ -363,11 +347,7 @@ export async function listSubscriptions(): Promise<readonly Subscription[]> {
     throw new Error(error.message);
   }
 
-  const subscriptions = ((data ?? []) as SubscriptionRow[]).map(
-    mapRowToSubscription,
-  );
-  syncSubscriptionCache(subscriptions);
-  return subscriptions;
+  return ((data ?? []) as SubscriptionRow[]).map(mapRowToSubscription);
 }
 
 export async function upsertSubscription(
@@ -385,6 +365,22 @@ export async function upsertSubscription(
   return listSubscriptions();
 }
 
+export async function upsertSubscriptions(
+  subscriptions: readonly Subscription[],
+): Promise<void> {
+  if (subscriptions.length === 0) return;
+
+  const supabase = createClient();
+  const payload = subscriptions.map(mapSubscriptionToRow);
+  const { error } = await supabase
+    .from("subscriptions")
+    .upsert(payload, { onConflict: "id" });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function deleteSubscription(
   id: string,
 ): Promise<readonly Subscription[]> {
@@ -396,6 +392,19 @@ export async function deleteSubscription(
   }
 
   return listSubscriptions();
+}
+
+export async function deleteSubscriptionsByIds(
+  ids: readonly string[],
+): Promise<void> {
+  if (ids.length === 0) return;
+
+  const supabase = createClient();
+  const { error } = await supabase.from("subscriptions").delete().in("id", ids);
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
 export function parseSubscriptions(raw: string): readonly Subscription[] {

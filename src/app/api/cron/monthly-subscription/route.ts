@@ -1,21 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getKstYearMonth } from "@/lib/time/kst";
 
 interface GenerationResultRow {
   readonly result_year_month: string;
   readonly created_count: number;
   readonly skipped_count: number;
   readonly total_count: number;
-}
-
-function getKstYearMonth(): string {
-  const now = new Date();
-  const kst = new Date(
-    now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }),
-  );
-  const year = kst.getFullYear();
-  const month = String(kst.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
 }
 
 function getAdminClient() {
@@ -45,7 +36,8 @@ export async function GET(request: Request) {
   }
 
   const requestUrl = new URL(request.url);
-  const yearMonth = requestUrl.searchParams.get("yearMonth") ?? getKstYearMonth();
+  const yearMonth =
+    requestUrl.searchParams.get("yearMonth") ?? getKstYearMonth();
 
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(yearMonth)) {
     return NextResponse.json(

@@ -1,6 +1,4 @@
 import { createClient } from "@/lib/supabase/client";
-import { BUDGET_STORAGE_KEY } from "@/lib/constants";
-import { notifyStorageChange } from "@/lib/storage/localStorageStore";
 import type { MonthlyBudget } from "@/types/monthlyBudget";
 
 interface MonthlyBudgetRow {
@@ -15,16 +13,15 @@ function normalizeCategories(value: unknown): Record<string, number> {
     return {};
   }
 
-  return Object.entries(value as Record<string, unknown>).reduce<Record<string, number>>(
-    (acc, [key, raw]) => {
-      const parsed = typeof raw === "number" ? raw : Number(raw);
-      if (Number.isFinite(parsed)) {
-        acc[key] = parsed;
-      }
-      return acc;
-    },
-    {},
-  );
+  return Object.entries(value as Record<string, unknown>).reduce<
+    Record<string, number>
+  >((acc, [key, raw]) => {
+    const parsed = typeof raw === "number" ? raw : Number(raw);
+    if (Number.isFinite(parsed)) {
+      acc[key] = parsed;
+    }
+    return acc;
+  }, {});
 }
 
 function mapRowToBudget(row: MonthlyBudgetRow): MonthlyBudget {
@@ -33,12 +30,6 @@ function mapRowToBudget(row: MonthlyBudgetRow): MonthlyBudget {
     categories: normalizeCategories(row.categories),
     updatedAt: row.updated_at,
   };
-}
-
-function syncBudgetCache(budgets: readonly MonthlyBudget[]): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(budgets));
-  notifyStorageChange(BUDGET_STORAGE_KEY);
 }
 
 async function listBudgetRows(): Promise<MonthlyBudgetRow[]> {
@@ -57,9 +48,7 @@ async function listBudgetRows(): Promise<MonthlyBudgetRow[]> {
 
 export async function listAllBudgets(): Promise<MonthlyBudget[]> {
   const rows = await listBudgetRows();
-  const budgets = rows.map(mapRowToBudget);
-  syncBudgetCache(budgets);
-  return budgets;
+  return rows.map(mapRowToBudget);
 }
 
 export async function getBudget(month: string): Promise<MonthlyBudget | null> {
@@ -123,7 +112,9 @@ export async function upsertBudget(
   await listAllBudgets();
 }
 
-export async function listBudgetsByYear(year: number): Promise<MonthlyBudget[]> {
+export async function listBudgetsByYear(
+  year: number,
+): Promise<MonthlyBudget[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("monthly_budgets")
@@ -135,19 +126,7 @@ export async function listBudgetsByYear(year: number): Promise<MonthlyBudget[]> 
     throw new Error(error.message);
   }
 
-  const budgets = ((data ?? []) as MonthlyBudgetRow[]).map(mapRowToBudget);
-
-  if (typeof window !== "undefined") {
-    const existing = localStorage.getItem(BUDGET_STORAGE_KEY);
-    const parsed: MonthlyBudget[] = existing ? JSON.parse(existing) : [];
-    const merged = [
-      ...parsed.filter((item) => !item.month.startsWith(`${year}-`)),
-      ...budgets,
-    ];
-    syncBudgetCache(merged);
-  }
-
-  return budgets;
+  return ((data ?? []) as MonthlyBudgetRow[]).map(mapRowToBudget);
 }
 
 export async function deleteBudget(month: string): Promise<void> {
@@ -162,6 +141,22 @@ export async function deleteBudget(month: string): Promise<void> {
   }
 
   await listAllBudgets();
+}
+
+export async function deleteBudgetsByMonths(
+  months: readonly string[],
+): Promise<void> {
+  if (months.length === 0) return;
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("monthly_budgets")
+    .delete()
+    .in("month", months);
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
 export async function applyYearTemplate(

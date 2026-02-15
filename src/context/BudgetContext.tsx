@@ -22,7 +22,6 @@ import {
   listTransactions,
   upsertTransactions,
 } from "@/lib/transactions/transactionRepository";
-import { storage } from "@/lib/storage";
 
 interface BudgetContextValue {
   state: BudgetState;
@@ -51,7 +50,6 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
   const refreshTransactions = useCallback(async () => {
     try {
       const loaded = await listTransactions();
-      storage.save(loaded);
       dispatch({ type: "LOAD_TRANSACTIONS", payload: loaded });
     } catch (error) {
       console.error("Failed to load transactions from Supabase:", error);

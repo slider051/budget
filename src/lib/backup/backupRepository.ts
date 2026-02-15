@@ -1,10 +1,19 @@
 import {
-  BUDGET_STORAGE_KEY,
-  STORAGE_KEY,
-  SUBSCRIPTIONS_STORAGE_KEY,
-} from "@/lib/constants";
-import { notifyStorageChange } from "@/lib/storage/localStorageStore";
-import { normalizeSubscriptionRecord } from "@/lib/subscriptions/subscriptionRepository";
+  deleteBudgetsByMonths,
+  listAllBudgets,
+  upsertBudget,
+} from "@/lib/budget/budgetRepository";
+import {
+  normalizeSubscriptionRecord,
+  listSubscriptions,
+  upsertSubscriptions,
+  deleteSubscriptionsByIds,
+} from "@/lib/subscriptions/subscriptionRepository";
+import {
+  listTransactions,
+  upsertTransactions,
+  deleteTransactionsByIds,
+} from "@/lib/transactions/transactionRepository";
 import type { Transaction } from "@/types/budget";
 import type { MonthlyBudget } from "@/types/monthlyBudget";
 import type { Subscription } from "@/types/subscription";
@@ -13,29 +22,27 @@ import { backupDataSchema } from "./backupSchema";
 
 const BACKUP_VERSION = "1.0.0";
 
-export function exportBackup(): BackupData {
+function emptyBackupData(): BackupData {
+  return {
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    transactions: [],
+    budgets: [],
+    subscriptions: [],
+  };
+}
+
+export async function exportBackup(): Promise<BackupData> {
   if (typeof window === "undefined") {
-    return {
-      version: BACKUP_VERSION,
-      exportedAt: new Date().toISOString(),
-      transactions: [],
-      budgets: [],
-      subscriptions: [],
-    };
+    return emptyBackupData();
   }
 
   try {
-    const transactionsRaw = localStorage.getItem(STORAGE_KEY);
-    const budgetsRaw = localStorage.getItem(BUDGET_STORAGE_KEY);
-    const subscriptionsRaw = localStorage.getItem(SUBSCRIPTIONS_STORAGE_KEY);
-
-    const transactions: Transaction[] = transactionsRaw
-      ? JSON.parse(transactionsRaw)
-      : [];
-    const budgets: MonthlyBudget[] = budgetsRaw ? JSON.parse(budgetsRaw) : [];
-    const subscriptions: Subscription[] = subscriptionsRaw
-      ? JSON.parse(subscriptionsRaw)
-      : [];
+    const [transactions, budgets, subscriptions] = await Promise.all([
+      listTransactions(),
+      listAllBudgets(),
+      listSubscriptions(),
+    ]);
 
     return {
       version: BACKUP_VERSION,
@@ -46,18 +53,12 @@ export function exportBackup(): BackupData {
     };
   } catch (error) {
     console.error("Failed to export backup:", error);
-    return {
-      version: BACKUP_VERSION,
-      exportedAt: new Date().toISOString(),
-      transactions: [],
-      budgets: [],
-      subscriptions: [],
-    };
+    return emptyBackupData();
   }
 }
 
-export function downloadBackup(): void {
-  const backup = exportBackup();
+export async function downloadBackup(): Promise<void> {
+  const backup = await exportBackup();
   const json = JSON.stringify(backup, null, 2);
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -74,10 +75,55 @@ export function downloadBackup(): void {
   URL.revokeObjectURL(url);
 }
 
-export function importBackup(
+async function replaceWithImportedData(
+  transactions: readonly Transaction[],
+  budgets: readonly MonthlyBudget[],
+  normalizedImportedSubscriptions: readonly Subscription[],
+): Promise<void> {
+  const [existingTransactions, existingBudgets, existingSubscriptions] =
+    await Promise.all([
+      listTransactions(),
+      listAllBudgets(),
+      listSubscriptions(),
+    ]);
+
+  await Promise.all([
+    deleteTransactionsByIds(existingTransactions.map((item) => item.id)),
+    deleteBudgetsByMonths(existingBudgets.map((item) => item.month)),
+    deleteSubscriptionsByIds(existingSubscriptions.map((item) => item.id)),
+  ]);
+
+  await Promise.all([
+    upsertTransactions(transactions),
+    upsertImportedBudgets(budgets),
+    upsertSubscriptions(normalizedImportedSubscriptions),
+  ]);
+}
+
+async function upsertImportedBudgets(
+  budgets: readonly MonthlyBudget[],
+): Promise<void> {
+  await Promise.all(
+    budgets.map((item) => upsertBudget(item.month, { ...item.categories })),
+  );
+}
+
+async function mergeWithImportedData(
+  transactions: readonly Transaction[],
+  normalizedImportedSubscriptions: readonly Subscription[],
+  budgets: readonly MonthlyBudget[],
+): Promise<void> {
+  await Promise.all([
+    upsertTransactions(transactions),
+    upsertImportedBudgets(budgets),
+    upsertSubscriptions(normalizedImportedSubscriptions),
+  ]);
+}
+
+export async function importBackup(
   jsonString: string,
   mode: ImportMode,
-): ImportResult {
+): Promise<ImportResult> {
   if (typeof window === "undefined") {
     return {
       success: false,
@@ -92,7 +138,7 @@ export function importBackup(
     if (!validation.success) {
       return {
         success: false,
-        message: `검증 실패: ${validation.error.issues.map((e) => e.message).join(", ")}`,
+        message: `Validation failed: ${validation.error.issues.map((e) => e.message).join(", ")}`,
       };
     }
 
@@ -102,64 +148,22 @@ export function importBackup(
       .filter((item): item is Subscription => item !== null);
 
     if (mode === "replace") {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data.transactions));
-      localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(data.budgets));
-      localStorage.setItem(
-        SUBSCRIPTIONS_STORAGE_KEY,
-        JSON.stringify(normalizedImportedSubscriptions),
+      await replaceWithImportedData(
+        data.transactions,
+        data.budgets,
+        normalizedImportedSubscriptions,
       );
     } else {
-      const existingTransactionsRaw = localStorage.getItem(STORAGE_KEY);
-      const existingBudgetsRaw = localStorage.getItem(BUDGET_STORAGE_KEY);
-      const existingSubscriptionsRaw = localStorage.getItem(
-        SUBSCRIPTIONS_STORAGE_KEY,
-      );
-
-      const existingTransactions: Transaction[] = existingTransactionsRaw
-        ? JSON.parse(existingTransactionsRaw)
-        : [];
-      const existingBudgets: MonthlyBudget[] = existingBudgetsRaw
-        ? JSON.parse(existingBudgetsRaw)
-        : [];
-      const existingSubscriptions: Subscription[] = existingSubscriptionsRaw
-        ? JSON.parse(existingSubscriptionsRaw)
-        : [];
-
-      const transactionMap = new Map(
-        existingTransactions.map((t) => [t.id, t]),
-      );
-      data.transactions.forEach((t) => transactionMap.set(t.id, t));
-
-      const budgetMap = new Map(existingBudgets.map((b) => [b.month, b]));
-      data.budgets.forEach((b) => budgetMap.set(b.month, b));
-      const subscriptionMap = new Map(
-        existingSubscriptions.map((s) => [s.id, s]),
-      );
-      normalizedImportedSubscriptions.forEach((s) =>
-        subscriptionMap.set(s.id, s),
-      );
-
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(Array.from(transactionMap.values())),
-      );
-      localStorage.setItem(
-        BUDGET_STORAGE_KEY,
-        JSON.stringify(Array.from(budgetMap.values())),
-      );
-      localStorage.setItem(
-        SUBSCRIPTIONS_STORAGE_KEY,
-        JSON.stringify(Array.from(subscriptionMap.values())),
+      await mergeWithImportedData(
+        data.transactions,
+        normalizedImportedSubscriptions,
+        data.budgets,
       );
     }
 
-    notifyStorageChange(STORAGE_KEY);
-    notifyStorageChange(BUDGET_STORAGE_KEY);
-    notifyStorageChange(SUBSCRIPTIONS_STORAGE_KEY);
-
     return {
       success: true,
-      message: `성공적으로 ${mode === "replace" ? "복원" : "병합"}되었습니다`,
+      message: `Successfully ${mode === "replace" ? "replaced" : "merged"} backup data.`,
       imported: {
         transactions: data.transactions.length,
         budgets: data.budgets.length,
@@ -168,10 +172,10 @@ export function importBackup(
     };
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : "알 수 없는 오류";
+      error instanceof Error ? error.message : "Unknown error";
     return {
       success: false,
-      message: `Import 실패: ${errorMessage}`,
+      message: `Import failed: ${errorMessage}`,
     };
   }
 }
