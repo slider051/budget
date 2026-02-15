@@ -55,6 +55,8 @@ const CRON_RATE_LIMIT_MAX = parsePositiveInt(
   process.env.CRON_RATE_LIMIT_MAX,
   DEFAULT_CRON_MAX,
 );
+const SECURITY_LOG_BLOCKED_REQUESTS =
+  process.env.SECURITY_LOG_BLOCKED_REQUESTS !== "false";
 
 function getStore(): Map<string, RateLimitState> {
   if (!globalThis.__apiRateLimitStore) {
@@ -77,6 +79,27 @@ function getClientIp(request: NextRequest): string {
   if (cfConnectingIp) return cfConnectingIp.trim();
 
   return "unknown";
+}
+
+function getUserAgent(request: NextRequest): string {
+  return request.headers.get("user-agent")?.trim() || "unknown";
+}
+
+function logBlockedRequest(
+  reason: "rate_limit" | "suspicious_path",
+  request: NextRequest,
+  detail: Record<string, string | number>,
+): void {
+  if (!SECURITY_LOG_BLOCKED_REQUESTS) return;
+
+  console.warn("[api-protection] blocked", {
+    reason,
+    method: request.method,
+    path: request.nextUrl.pathname,
+    ip: getClientIp(request),
+    ua: getUserAgent(request),
+    ...detail,
+  });
 }
 
 function isApiPath(pathname: string): boolean {
@@ -159,6 +182,14 @@ function withRateLimit(
     Math.ceil((existing.resetAt - now) / 1000),
   );
 
+  logBlockedRequest("rate_limit", request, {
+    bucket: rule.bucket,
+    limit: rule.max,
+    count: existing.count,
+    windowMs: rule.windowMs,
+    retryAfterSeconds,
+  });
+
   return NextResponse.json(
     { error: "Too many requests" },
     {
@@ -166,6 +197,7 @@ function withRateLimit(
       headers: {
         "Cache-Control": "no-store",
         "Retry-After": String(retryAfterSeconds),
+        "X-API-Protection": "rate-limit",
       },
     },
   );
@@ -178,12 +210,14 @@ export function protectApiRequest(request: NextRequest): NextResponse | null {
   if (request.method === "OPTIONS") return null;
 
   if (isSuspiciousApiPath(pathname)) {
+    logBlockedRequest("suspicious_path", request, {});
     return NextResponse.json(
       { error: "Not Found" },
       {
         status: 404,
         headers: {
           "Cache-Control": "no-store",
+          "X-API-Protection": "suspicious-path",
         },
       },
     );

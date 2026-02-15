@@ -112,11 +112,12 @@
   7. Phase 3 1차 완료(localStorage 데이터 fallback 제거 + lint 차단)
   8. 분석 집계 1차 서버화(`/analysis -> /api/analysis/annual`)
   9. 분석 집계 2차 코드 완료(RPC SQL + fallback-safe API)
+  10. WAF 운영 준비 완료(차단 로그 강화 + `WAF_RUNBOOK.md`)
 - 다음 작업:
   1. `Vercel Cron -> API -> RPC` 연결
   2. Vercel Cron 자동 실행 로그 확인
   3. Supabase SQL migration 적용 후 `/api/analysis/annual` `source=rpc` 확인
-  4. Vercel WAF 룰셋(대시보드) 적용 및 운영 로그 기반 튜닝
+  4. Vercel WAF 룰셋(대시보드) 실제 적용 및 24시간 튜닝
 
 ## MVP 1.5 실행 플랜
 

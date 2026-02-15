@@ -34,6 +34,8 @@ npm run test:analysis # 연간 분석 집계 단위 테스트
 - `API_RATE_LIMIT_WINDOW_MS` (선택, 기본 `60000`): `/api/*` 레이트리밋 윈도우(ms)
 - `API_RATE_LIMIT_MAX` (선택, 기본 `60`): `/api/*` 윈도우당 허용 요청 수
 - `CRON_RATE_LIMIT_MAX` (선택, 기본 `10`): `/api/cron/*` 윈도우당 허용 요청 수
+- `SECURITY_LOG_BLOCKED_REQUESTS` (선택, 기본 `true`): 차단 요청(rate/suspicious path) 로그 출력 여부
+- WAF 운영 가이드: `WAF_RUNBOOK.md`
 
 ## Supabase SQL 적용(분석 RPC 2차)
 
