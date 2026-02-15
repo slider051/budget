@@ -1,5 +1,5 @@
-import type { Transaction } from "@/types/budget";
-import type { MonthlyBudget } from "@/types/monthlyBudget";
+import type { Transaction } from "../../types/budget.ts";
+import type { MonthlyBudget } from "../../types/monthlyBudget.ts";
 
 export interface AnnualSummary {
   readonly year: number;

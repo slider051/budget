@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test:kst": "node --test tests/kst-year-month.test.ts"
+    "test:kst": "node --test tests/kst-year-month.test.ts",
+    "test:analysis": "node --test tests/analysis-api.test.ts"
   },
   "keywords": [],
   "author": "",

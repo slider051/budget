@@ -1,78 +1,82 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useBudget } from "@/hooks/useBudget";
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
 import AnnualKPICards from "@/components/analysis/AnnualKPICards";
 import MonthlySummaryTable from "@/components/analysis/MonthlySummaryTable";
 import CategoryAnnualTotals from "@/components/analysis/CategoryAnnualTotals";
-import {
-  calculateAnnualSummary,
-  calculateMonthlySummaries,
-  calculateCategoryAnnualTotals,
-} from "@/lib/analysis/annualCalculations";
-import { listBudgetsByYear } from "@/lib/budget/budgetRepository";
-import type { MonthlyBudget } from "@/types/monthlyBudget";
+import { parseAnalysisYear } from "@/lib/analysis/annualApi";
+import type { AnnualAnalysisPayload } from "@/types/analysis";
+
+interface AnnualAnalysisApiResponse extends AnnualAnalysisPayload {
+  readonly ok: boolean;
+}
 
 function AnalysisContent() {
-  const { state } = useBudget();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [budgets, setBudgets] = useState<MonthlyBudget[]>([]);
+  const [analysis, setAnalysis] = useState<AnnualAnalysisPayload | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const currentYear = new Date().getFullYear();
-  const yearParam = searchParams.get("year");
-  const parsedYear = yearParam ? parseInt(yearParam, 10) : currentYear;
-  const selectedYear = !isNaN(parsedYear) ? parsedYear : currentYear;
+  const selectedYear = parseAnalysisYear(searchParams.get("year"), currentYear);
 
   useEffect(() => {
     let cancelled = false;
 
-    listBudgetsByYear(selectedYear)
-      .then((rows) => {
-        if (!cancelled) {
-          setBudgets(rows);
+    async function load() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `/api/analysis/annual?year=${selectedYear}`,
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
+
+        const body = (await response.json()) as
+          | AnnualAnalysisApiResponse
+          | { error?: string };
+
+        if (!response.ok) {
+          const message =
+            "error" in body && typeof body.error === "string"
+              ? body.error
+              : "Failed to load annual analysis";
+          throw new Error(message);
         }
-      })
-      .catch((error) => {
-        console.error("Failed to load budgets for analysis:", error);
+
         if (!cancelled) {
-          setBudgets([]);
+          setAnalysis(body as AnnualAnalysisPayload);
         }
-      });
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            err instanceof Error
+              ? err.message
+              : "Failed to load annual analysis";
+          setError(message);
+          setAnalysis(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void load();
 
     return () => {
       cancelled = true;
     };
   }, [selectedYear]);
-
-  const annualSummary = useMemo(
-    () => calculateAnnualSummary(state.transactions, selectedYear),
-    [state.transactions, selectedYear],
-  );
-
-  const monthlySummaries = useMemo(
-    () => calculateMonthlySummaries(state.transactions, budgets, selectedYear),
-    [state.transactions, budgets, selectedYear],
-  );
-
-  const expenseTotals = useMemo(
-    () =>
-      calculateCategoryAnnualTotals(
-        state.transactions,
-        selectedYear,
-        "expense",
-      ),
-    [state.transactions, selectedYear],
-  );
-
-  const incomeTotals = useMemo(
-    () =>
-      calculateCategoryAnnualTotals(state.transactions, selectedYear, "income"),
-    [state.transactions, selectedYear],
-  );
 
   const handlePreviousYear = () => {
     router.push(`/analysis?year=${selectedYear - 1}`);
@@ -110,24 +114,38 @@ function AnalysisContent() {
         )}
       </div>
 
-      <div className="space-y-6">
-        <AnnualKPICards summary={annualSummary} />
-
-        <MonthlySummaryTable summaries={monthlySummaries} />
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <CategoryAnnualTotals
-            title="카테고리별 지출 Top"
-            totals={expenseTotals}
-            colorClass="text-red-600"
-          />
-          <CategoryAnnualTotals
-            title="카테고리별 수입 Top"
-            totals={incomeTotals}
-            colorClass="text-green-600"
-          />
+      {isLoading && (
+        <div className="py-12 text-center text-gray-500">
+          Loading analysis...
         </div>
-      </div>
+      )}
+
+      {!isLoading && error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {!isLoading && !error && analysis && (
+        <div className="space-y-6">
+          <AnnualKPICards summary={analysis.summary} />
+
+          <MonthlySummaryTable summaries={analysis.monthlySummaries} />
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <CategoryAnnualTotals
+              title="카테고리별 지출 Top"
+              totals={analysis.expenseTotals}
+              colorClass="text-red-600"
+            />
+            <CategoryAnnualTotals
+              title="카테고리별 수입 Top"
+              totals={analysis.incomeTotals}
+              colorClass="text-green-600"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

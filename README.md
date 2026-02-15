@@ -24,6 +24,8 @@ npm run dev       # 개발 서버: http://localhost:3000
 npm run build     # 프로덕션 빌드
 npm run lint      # ESLint 검사
 npm run lint:fix  # ESLint 자동 수정
+npm run test:kst  # KST 월 경계 단위 테스트
+npm run test:analysis # 연간 분석 집계 단위 테스트
 ```
 
 ## 운영 보안 환경변수
