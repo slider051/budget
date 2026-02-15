@@ -95,3 +95,17 @@ npm run test:ops-alert # 운영 알림 웹훅 단위 테스트
 - 예산 템플릿 저장/불러오기
 - CSV/Excel 내보내기
 - 구독관리 기능 고도화 (진행 중)
+
+## Regression Gate
+
+Use the commands below for release gating and evidence capture.
+
+```bash
+npm run test:api
+npm run test:all
+npm run gate:regression
+```
+
+- `npm run gate:regression` runs `lint -> test:all -> build`.
+- A markdown evidence report is generated under `reports/pass-evidence/`.
+- Manual checklist template: `PASS_EVIDENCE_TEMPLATE.md`.

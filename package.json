@@ -11,7 +11,10 @@
     "lint:fix": "eslint . --fix",
     "test:kst": "node --test tests/kst-year-month.test.ts",
     "test:analysis": "node --test tests/analysis-api.test.ts",
-    "test:ops-alert": "node --test tests/ops-alert.test.ts"
+    "test:ops-alert": "node --test tests/ops-alert.test.ts",
+    "test:api": "node --test tests/api-errors.test.ts tests/api-validation.test.ts",
+    "test:all": "node --test tests/analysis-api.test.ts tests/api-errors.test.ts tests/api-validation.test.ts tests/kst-year-month.test.ts tests/ops-alert.test.ts",
+    "gate:regression": "node scripts/regression-gate.mjs"
   },
   "keywords": [],
   "author": "",
