@@ -48,8 +48,10 @@ export async function sendOpsAlert(
   if (!webhookUrl) return false;
 
   const fetcher = options.fetcher ?? fetch;
+  const message = buildOpsAlertMessage(input);
   const payload = {
-    text: buildOpsAlertMessage(input),
+    text: message,
+    content: message,
   };
 
   try {
