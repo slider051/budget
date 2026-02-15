@@ -67,11 +67,11 @@ export default function BudgetCategoryCard({
         </button>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex justify-center sm:flex-1 sm:justify-start">
           <CircularProgress percentage={percentage} size="md">
             <div className="text-center">
-              <div className="text-lg font-bold text-gray-900">
+              <div className="break-all px-1 text-sm font-bold leading-tight text-gray-900 sm:text-base">
                 {formatCurrency(spent)}
               </div>
               <div className="text-xs text-gray-500">
@@ -81,11 +81,11 @@ export default function BudgetCategoryCard({
           </CircularProgress>
         </div>
 
-        <div className="flex-1 text-right">
-          <div className="text-2xl font-bold text-gray-900 mb-1">
+        <div className="min-w-0 text-left sm:flex-1 sm:text-right">
+          <div className="mb-1 break-all text-xl font-bold leading-tight text-gray-900 sm:text-2xl">
             {formatCurrency(remaining)}
           </div>
-          <div className="text-sm text-gray-500 mb-3">
+          <div className="mb-3 break-all text-sm text-gray-500">
             / {formatCurrency(budget)}
           </div>
           {isOnTrack && (

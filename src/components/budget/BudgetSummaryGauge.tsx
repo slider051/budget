@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import CircularProgress from './CircularProgress';
-import Badge from '@/components/ui/Badge';
-import { formatCurrency } from '@/lib/formatters';
+import CircularProgress from "./CircularProgress";
+import Badge from "@/components/ui/Badge";
+import { formatCurrency } from "@/lib/formatters";
 
 interface BudgetSummaryGaugeProps {
   totalSpent: number;
@@ -29,15 +29,19 @@ export default function BudgetSummaryGauge({
         </button>
       </div>
 
-      <div className="flex flex-col items-center mb-6">
-        <div className="text-4xl font-bold text-gray-900 mb-2">
+      <div className="mb-6 flex flex-col items-center">
+        <div className="mb-2 break-all text-center text-2xl font-bold leading-tight text-gray-900 sm:text-3xl xl:text-4xl">
           {formatCurrency(totalBudget)}
         </div>
         {percentage <= 80 && (
           <Badge variant="success">
             <span className="flex items-center gap-1">
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
               </svg>
               on track
             </span>
@@ -45,13 +49,13 @@ export default function BudgetSummaryGauge({
         )}
       </div>
 
-      <div className="flex justify-center mb-6">
-        <CircularProgress percentage={percentage} size="xl">
+      <div className="mb-6 flex justify-center">
+        <CircularProgress percentage={percentage} size="lg">
           <div className="text-center">
             <div className="text-sm text-gray-500 mb-1">
               {percentageRemaining.toFixed(0)}% left
             </div>
-            <div className="text-2xl font-bold text-gray-900">
+            <div className="break-all px-2 text-lg font-bold leading-tight text-gray-900 sm:text-xl">
               {formatCurrency(remaining)}
             </div>
           </div>
@@ -59,7 +63,10 @@ export default function BudgetSummaryGauge({
       </div>
 
       <div className="text-center text-sm text-gray-500">
-        <span className="font-medium text-gray-900">{percentage.toFixed(0)}% spent</span> · {formatCurrency(totalSpent)}
+        <span className="font-medium text-gray-900">
+          {percentage.toFixed(0)}% spent
+        </span>{" "}
+        · {formatCurrency(totalSpent)}
       </div>
     </div>
   );

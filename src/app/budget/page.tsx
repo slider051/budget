@@ -148,9 +148,9 @@ function BudgetContent() {
         </div>
       )}
 
-      <div className="flex gap-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
         {/* Main Content Area */}
-        <div className="flex-1">
+        <div className="min-w-0">
           <div className="mb-4 text-sm text-gray-600">
             {filteredCategoryData.length} items
             {filteredCategoryData.length !== categoryData.length && (
@@ -162,7 +162,7 @@ function BudgetContent() {
           </div>
 
           {/* Category Cards Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {filteredCategoryData.map((data) => (
               <BudgetCategoryCard
                 key={data.category}
@@ -179,7 +179,7 @@ function BudgetContent() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-96 space-y-6">
+        <div className="min-w-0 space-y-6">
           {hasBudget && (
             <BudgetSummaryGauge
               totalSpent={totalSpent}

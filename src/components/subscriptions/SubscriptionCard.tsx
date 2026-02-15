@@ -39,7 +39,8 @@ function SubscriptionCardComponent({
   const yearlyAmount = getSubscriptionYearlyAmount(subscription);
   const discountPercent = getDiscountPercent(subscription);
   const nextPayment = getDisplayedNextPaymentDate(subscription);
-  const paymentDateLabel = nextPayment.reason === "end_date" ? "만료" : "다음 결제";
+  const paymentDateLabel =
+    nextPayment.reason === "end_date" ? "만료" : "다음 결제";
   const baselinePrice = getPerPersonDefaultPrice(subscription);
   const cycleLabel = getCycleLabel(
     subscription.billingCycle,
@@ -77,14 +78,6 @@ function SubscriptionCardComponent({
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => onToggleMemo(subscription.id)}
-          >
-            {isMemoOpen ? "접기" : "상세"}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
             onClick={() => onEdit(subscription)}
             disabled={isDeleting}
           >
@@ -115,10 +108,21 @@ function SubscriptionCardComponent({
         </p>
       </div>
 
+      <div className="mt-3 flex justify-end">
+        <button
+          type="button"
+          className="text-xs font-medium text-indigo-600 underline underline-offset-2 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
+          onClick={() => onToggleMemo(subscription.id)}
+        >
+          {isMemoOpen ? "상세 접기" : "상세"}
+        </button>
+      </div>
+
       {isMemoOpen && (
         <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
           <p>
-            연 환산: <strong>{formatMoney(yearlyAmount, subscription.currency)}</strong>
+            연 환산:{" "}
+            <strong>{formatMoney(yearlyAmount, subscription.currency)}</strong>
           </p>
           <p className="mt-1">
             환산 기준: <strong>{cycleMonths}개월</strong> ({cycleLabel})
