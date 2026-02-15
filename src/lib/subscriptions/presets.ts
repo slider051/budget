@@ -19,7 +19,15 @@ export const SUBSCRIPTION_PRESETS: readonly SubscriptionPreset[] = [
     category: "ott",
     defaultPrice: 14900,
     currency: "KRW",
-    logoUrl: "https://logo.clearbit.com/youtube.com",
+    logoUrl: "/logos/youtube-icon-red.png",
+  },
+  {
+    key: "netflix",
+    name: "Netflix",
+    category: "ott",
+    defaultPrice: 17000,
+    currency: "KRW",
+    logoUrl: "/logos/netflix-logo-rgb.png",
   },
   {
     key: "disney-plus",
@@ -83,7 +91,7 @@ export const SUBSCRIPTION_PRESETS: readonly SubscriptionPreset[] = [
     category: "ai",
     defaultPrice: 20,
     currency: "USD",
-    logoUrl: "https://logo.clearbit.com/openai.com",
+    logoUrl: "/logos/openai-monoblossom-black.svg",
   },
   {
     key: "gemini",
