@@ -14,11 +14,23 @@ interface SendOpsAlertOptions {
   ) => Promise<Response>;
 }
 
-function getWebhookUrl(): string | null {
-  const raw = process.env.OPS_ALERT_WEBHOOK_URL;
+function parseWebhookUrl(raw: string | undefined): string | null {
   if (!raw) return null;
   const url = raw.trim();
   return url.length > 0 ? url : null;
+}
+
+function getWebhookUrlBySeverity(severity: OpsAlertSeverity): string | null {
+  const severityEnvMap: Record<OpsAlertSeverity, string | undefined> = {
+    critical: process.env.OPS_ALERT_WEBHOOK_URL_CRITICAL,
+    error: process.env.OPS_ALERT_WEBHOOK_URL_ERROR,
+    warn: process.env.OPS_ALERT_WEBHOOK_URL_WARN,
+  };
+
+  const severityUrl = parseWebhookUrl(severityEnvMap[severity]);
+  if (severityUrl) return severityUrl;
+
+  return parseWebhookUrl(process.env.OPS_ALERT_WEBHOOK_URL);
 }
 
 function getIsoTimestamp(): string {
@@ -44,7 +56,7 @@ export async function sendOpsAlert(
   input: OpsAlertInput,
   options: SendOpsAlertOptions = {},
 ): Promise<boolean> {
-  const webhookUrl = getWebhookUrl();
+  const webhookUrl = getWebhookUrlBySeverity(input.severity);
   if (!webhookUrl) return false;
 
   const fetcher = options.fetcher ?? fetch;

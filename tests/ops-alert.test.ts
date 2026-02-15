@@ -24,6 +24,9 @@ test("buildOpsAlertMessage includes severity, source, and details", () => {
 
 test("sendOpsAlert returns false when webhook env is missing", async () => {
   delete process.env.OPS_ALERT_WEBHOOK_URL;
+  delete process.env.OPS_ALERT_WEBHOOK_URL_CRITICAL;
+  delete process.env.OPS_ALERT_WEBHOOK_URL_ERROR;
+  delete process.env.OPS_ALERT_WEBHOOK_URL_WARN;
   const result = await sendOpsAlert({
     severity: "warn",
     source: "analysis/annual",
@@ -55,4 +58,30 @@ test("sendOpsAlert posts message when webhook env exists", async () => {
   assert.equal(calls.length, 1);
   assert.equal(calls[0]?.url, "https://example.com/webhook");
   assert.equal(calls[0]?.init?.method, "POST");
+});
+
+test("sendOpsAlert prefers severity-specific webhook url", async () => {
+  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  process.env.OPS_ALERT_WEBHOOK_URL = "https://example.com/default";
+  process.env.OPS_ALERT_WEBHOOK_URL_CRITICAL = "https://example.com/critical";
+  delete process.env.OPS_ALERT_WEBHOOK_URL_ERROR;
+  delete process.env.OPS_ALERT_WEBHOOK_URL_WARN;
+
+  const result = await sendOpsAlert(
+    {
+      severity: "critical",
+      source: "cron/monthly-subscription",
+      message: "critical path",
+    },
+    {
+      fetcher: async (input, init) => {
+        calls.push({ url: String(input), init });
+        return new Response("", { status: 200 });
+      },
+    },
+  );
+
+  assert.equal(result, true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0]?.url, "https://example.com/critical");
 });

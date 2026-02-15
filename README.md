@@ -37,6 +37,9 @@ npm run test:ops-alert # 운영 알림 웹훅 단위 테스트
 - `CRON_RATE_LIMIT_MAX` (선택, 기본 `10`): `/api/cron/*` 윈도우당 허용 요청 수
 - `SECURITY_LOG_BLOCKED_REQUESTS` (선택, 기본 `true`): 차단 요청(rate/suspicious path) 로그 출력 여부
 - `OPS_ALERT_WEBHOOK_URL` (선택): 운영 알림 웹훅 URL (예: Slack Incoming Webhook)
+- `OPS_ALERT_WEBHOOK_URL_CRITICAL` (선택): `critical` 전용 웹훅 URL
+- `OPS_ALERT_WEBHOOK_URL_ERROR` (선택): `error` 전용 웹훅 URL
+- `OPS_ALERT_WEBHOOK_URL_WARN` (선택): `warn` 전용 웹훅 URL
 - WAF 운영 가이드: `WAF_RUNBOOK.md`
 
 ## Supabase SQL 적용(분석 RPC 2차)

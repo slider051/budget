@@ -151,3 +151,5 @@
 3. localStorage fallback 제거 완료(허용 목록 외 lint 차단).
 4. 알림 채널 실운영 연결 완료.
 5. 린트/빌드/회귀 테스트 통과 + PASS 증빙 템플릿 첨부 후 배포.
+
+- 2026-02-15 note: Discord webhook configured; waiting for next scheduled vercel-cron auto-run verification.
