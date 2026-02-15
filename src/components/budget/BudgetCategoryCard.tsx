@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import CircularProgress from "./CircularProgress";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
@@ -29,6 +30,8 @@ export default function BudgetCategoryCard({
   koreanName,
   onEditBudget,
 }: BudgetCategoryCardProps) {
+  const t = useTranslations("budget");
+  const tc = useTranslations("common");
   const percentage = budget > 0 ? (spent / budget) * 100 : 0;
   const remaining = budget - spent;
   const isOnTrack = percentage <= 80;
@@ -44,7 +47,7 @@ export default function BudgetCategoryCard({
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow max-w-md">
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow w-[420px] h-[280px] flex flex-col">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           {icon && <span className="text-2xl">{icon}</span>}
@@ -67,22 +70,22 @@ export default function BudgetCategoryCard({
         </button>
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex justify-center sm:flex-1 sm:justify-start">
+      <div className="flex items-center justify-between flex-1">
+        <div className="flex justify-center">
           <CircularProgress percentage={percentage} size="md">
             <div className="text-center">
-              <div className="break-all px-1 text-sm font-bold leading-tight text-gray-900 sm:text-base">
+              <div className="break-all px-1 text-sm font-bold leading-tight text-gray-900">
                 {formatCurrency(spent)}
               </div>
               <div className="text-xs text-gray-500">
-                {remaining > 0 ? "Left" : "Over"}
+                {remaining > 0 ? tc("left") : tc("over")}
               </div>
             </div>
           </CircularProgress>
         </div>
 
-        <div className="min-w-0 text-left sm:flex-1 sm:text-right">
-          <div className="mb-1 break-all text-xl font-bold leading-tight text-gray-900 sm:text-2xl">
+        <div className="min-w-0 text-right">
+          <div className="mb-1 break-all text-xl font-bold leading-tight text-gray-900">
             {formatCurrency(remaining)}
           </div>
           <div className="mb-3 break-all text-sm text-gray-500">
@@ -102,7 +105,7 @@ export default function BudgetCategoryCard({
                     clipRule="evenodd"
                   />
                 </svg>
-                on track
+                {tc("onTrack")}
               </span>
             </Badge>
           )}
@@ -120,7 +123,7 @@ export default function BudgetCategoryCard({
                     clipRule="evenodd"
                   />
                 </svg>
-                need attention
+                {tc("needAttention")}
               </span>
             </Badge>
           )}
@@ -132,15 +135,18 @@ export default function BudgetCategoryCard({
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-sm font-medium text-orange-900 mb-1">
-                Needs attention
+                {t("needsAttention")}
               </p>
               <p className="text-xs text-orange-700 mb-2">
-                {koreanName} 예산의 {percentage.toFixed(0)}%를 사용했습니다
+                {t("usedPercent", {
+                  category: koreanName,
+                  percent: percentage.toFixed(0),
+                })}
               </p>
               <div className="flex gap-2">
                 {onEditBudget && (
                   <Button onClick={onEditBudget} size="sm" variant="secondary">
-                    예산 수정
+                    {t("editBudget")}
                   </Button>
                 )}
                 <Button
@@ -148,7 +154,7 @@ export default function BudgetCategoryCard({
                   size="sm"
                   variant="outline"
                 >
-                  확인
+                  {tc("confirm")}
                 </Button>
               </div>
             </div>

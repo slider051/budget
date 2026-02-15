@@ -9,7 +9,7 @@ import { useBudgetData } from "@/hooks/useBudgetData";
 import {
   EXPENSE_CATEGORIES,
   CATEGORY_ICONS,
-  CATEGORY_EN_NAMES,
+  CATEGORY_I18N_KEYS,
 } from "@/lib/constants";
 import {
   calculateCategorySpent,
@@ -36,6 +36,7 @@ function BudgetContent() {
   const searchParams = useSearchParams();
   const t = useTranslations("budget");
   const tc = useTranslations("common");
+  const tCat = useTranslations("categories");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { budget, refresh } = useBudgetData(selectedMonth);
 
@@ -66,9 +67,11 @@ function BudgetContent() {
       );
       const budgetAmount = budget?.categories[category] ?? 0;
       const usagePct = budgetAmount > 0 ? (spent / budgetAmount) * 100 : null;
+      const i18nKey = CATEGORY_I18N_KEYS[category];
+      const displayName = i18nKey ? tCat(i18nKey) : category;
 
       return {
-        category: CATEGORY_EN_NAMES[category] || category,
+        category: displayName,
         koreanName: category,
         spent,
         budget: budgetAmount,
@@ -76,7 +79,7 @@ function BudgetContent() {
         usagePct,
       };
     });
-  }, [state.transactions, selectedMonth, budget]);
+  }, [state.transactions, selectedMonth, budget, tCat]);
 
   const filteredCategoryData = useMemo(
     () => applyBudgetFilters(categoryData, filters),
@@ -99,23 +102,29 @@ function BudgetContent() {
 
   const topExpenses = useMemo(() => {
     const top = getTopExpensesByMonth(state.transactions, selectedMonth, 7);
-    return top.map((item) => ({
-      category: CATEGORY_EN_NAMES[item.category] || item.category,
-      amount: item.amount,
-      icon: CATEGORY_ICONS[item.category] || "💸",
-      percentage: 0,
-    }));
-  }, [state.transactions, selectedMonth]);
+    return top.map((item) => {
+      const key = CATEGORY_I18N_KEYS[item.category];
+      return {
+        category: key ? tCat(key) : item.category,
+        amount: item.amount,
+        icon: CATEGORY_ICONS[item.category] || "💸",
+        percentage: 0,
+      };
+    });
+  }, [state.transactions, selectedMonth, tCat]);
 
   const topIncome = useMemo(() => {
     const top = getTopIncomeByMonth(state.transactions, selectedMonth, 7);
-    return top.map((item) => ({
-      category: CATEGORY_EN_NAMES[item.category] || item.category,
-      amount: item.amount,
-      icon: CATEGORY_ICONS[item.category] || "💵",
-      percentage: 0,
-    }));
-  }, [state.transactions, selectedMonth]);
+    return top.map((item) => {
+      const key = CATEGORY_I18N_KEYS[item.category];
+      return {
+        category: key ? tCat(key) : item.category,
+        amount: item.amount,
+        icon: CATEGORY_ICONS[item.category] || "💵",
+        percentage: 0,
+      };
+    });
+  }, [state.transactions, selectedMonth, tCat]);
 
   const handleModalSaved = () => {
     refresh();
@@ -148,7 +157,7 @@ function BudgetContent() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
+      <div className="flex flex-col gap-6 lg:flex-row">
         {/* Main Content Area */}
         <div className="min-w-0">
           <div className="mb-4 text-sm text-gray-600">
@@ -162,13 +171,7 @@ function BudgetContent() {
           </div>
 
           {/* Category Cards Grid */}
-          <div
-            className="grid gap-6"
-            style={{
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(min(100%, 26rem), 1fr))",
-            }}
-          >
+          <div className="flex flex-wrap gap-6">
             {filteredCategoryData.map((data) => (
               <BudgetCategoryCard
                 key={data.category}
@@ -185,7 +188,7 @@ function BudgetContent() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="min-w-0 space-y-6">
+        <div className="shrink-0 space-y-6">
           {hasBudget && (
             <BudgetSummaryGauge
               totalSpent={totalSpent}
@@ -203,7 +206,7 @@ function BudgetContent() {
           )}
 
           {totalIncome > 0 && (
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+            <div className="w-[340px] bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 {t("monthlyIncome")}
               </h3>

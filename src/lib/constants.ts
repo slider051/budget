@@ -45,3 +45,20 @@ export const CATEGORY_EN_NAMES: Record<string, string> = {
 };
 
 export const DEFAULT_CURRENCY = "KRW";
+
+/** Map Korean category key → i18n message key in "categories" namespace */
+export const CATEGORY_I18N_KEYS: Record<string, string> = {
+  식비: "food",
+  교통비: "transport",
+  주거비: "housing",
+  통신비: "communication",
+  쇼핑: "shopping",
+  의료: "health",
+  교육: "education",
+  문화생활: "entertainment",
+  기타지출: "otherExpense",
+  급여: "salary",
+  부업: "sideIncome",
+  투자: "investments",
+  기타수입: "otherIncome",
+};

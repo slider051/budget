@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import { formatCurrency } from '@/lib/formatters';
+import { useTranslations } from "next-intl";
+import { formatCurrency } from "@/lib/formatters";
 
 interface TopExpense {
   category: string;
@@ -14,19 +15,27 @@ interface TopExpensesListProps {
   title?: string;
 }
 
-export default function TopExpensesList({ expenses, title = 'Most expenses' }: TopExpensesListProps) {
+export default function TopExpensesList({
+  expenses,
+  title,
+}: TopExpensesListProps) {
+  const tc = useTranslations("common");
+
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5 w-[340px]">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-        <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-          This month
-        </button>
+        <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+        <span className="text-sm text-indigo-600 font-medium">
+          {tc("thisMonth")}
+        </span>
       </div>
 
       <div className="space-y-3">
         {expenses.map((expense, index) => (
-          <div key={index} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors">
+          <div
+            key={index}
+            className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors"
+          >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center text-lg">
                 {expense.icon}
@@ -35,15 +44,16 @@ export default function TopExpensesList({ expenses, title = 'Most expenses' }: T
                 <div className="text-sm font-medium text-gray-900">
                   {formatCurrency(expense.amount)}
                 </div>
-                <div className="text-xs text-gray-500">
-                  {expense.category}
-                </div>
+                <div className="text-xs text-gray-500">{expense.category}</div>
               </div>
             </div>
-            <div className={`text-sm font-medium ${
-              expense.percentage > 0 ? 'text-red-600' : 'text-green-600'
-            }`}>
-              {expense.percentage > 0 ? '↑' : '↓'} {Math.abs(expense.percentage).toFixed(1)}%
+            <div
+              className={`text-sm font-medium ${
+                expense.percentage > 0 ? "text-red-600" : "text-green-600"
+              }`}
+            >
+              {expense.percentage > 0 ? "↑" : "↓"}{" "}
+              {Math.abs(expense.percentage).toFixed(1)}%
             </div>
           </div>
         ))}

@@ -52,7 +52,7 @@ function SubscriptionCardComponent({
   );
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+    <div className="flex h-full flex-col rounded-xl border border-gray-200 p-4 dark:border-gray-700 w-[300px]">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
           {subscription.logoUrl && !isLogoBroken ? (
