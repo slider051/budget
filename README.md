@@ -43,6 +43,15 @@ npm run test:analysis # 연간 분석 집계 단위 테스트
 - 롤백 파일: `supabase/migrations/20260215_analysis_payload_rpc_rollback.sql`
 - 적용 후 확인: `/api/analysis/annual?year=2026` 응답에서 `source`가 `rpc`인지 확인
 
+## Cron 운영 로그 확인 포인트
+
+- 경로: `/api/cron/monthly-subscription`
+- 응답 필드: `ok`, `yearMonth`, `users`, `created`, `skipped`, `total`, `trigger`, `requestId`
+- 로그 이벤트:
+  - `[cron/monthly-subscription] started`
+  - `[cron/monthly-subscription] completed`
+  - `[cron/monthly-subscription] failed`
+
 ## 최근 추가된 기능
 
 ### 거래내역 필터링 (IME 안정화)

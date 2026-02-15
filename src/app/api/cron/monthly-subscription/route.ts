@@ -9,6 +9,12 @@ interface GenerationResultRow {
   readonly total_count: number;
 }
 
+interface CronContext {
+  readonly trigger: "vercel-cron" | "manual-or-other";
+  readonly requestId: string;
+  readonly ua: string;
+}
+
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -30,8 +36,21 @@ function isAuthorized(request: Request): boolean {
   return authHeader === `Bearer ${expected}`;
 }
 
+function buildCronContext(request: Request): CronContext {
+  const ua = request.headers.get("user-agent") ?? "unknown";
+  const trigger = ua.includes("vercel-cron")
+    ? "vercel-cron"
+    : "manual-or-other";
+  const requestId = request.headers.get("x-vercel-id") ?? crypto.randomUUID();
+
+  return { trigger, requestId, ua };
+}
+
 export async function GET(request: Request) {
+  const context = buildCronContext(request);
+
   if (!isAuthorized(request)) {
+    console.warn("[cron/monthly-subscription] unauthorized", context);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -47,6 +66,12 @@ export async function GET(request: Request) {
   }
 
   try {
+    console.info("[cron/monthly-subscription] started", {
+      ...context,
+      yearMonth,
+      timestamp: new Date().toISOString(),
+    });
+
     const supabase = getAdminClient();
     const { data: users, error: usersError } = await supabase
       .from("subscriptions")
@@ -89,7 +114,7 @@ export async function GET(request: Request) {
       total += Number(row.total_count ?? 0);
     }
 
-    return NextResponse.json({
+    const responseBody = {
       ok: true,
       yearMonth,
       users: userIds.length,
@@ -97,9 +122,20 @@ export async function GET(request: Request) {
       skipped,
       total,
       timestamp: new Date().toISOString(),
-    });
+      trigger: context.trigger,
+      requestId: context.requestId,
+    };
+
+    console.info("[cron/monthly-subscription] completed", responseBody);
+
+    return NextResponse.json(responseBody);
   } catch (error) {
-    console.error("[cron/monthly-subscription] failed:", error);
+    console.error("[cron/monthly-subscription] failed", {
+      ...context,
+      yearMonth,
+      error: error instanceof Error ? error.message : "Unknown error",
+      timestamp: new Date().toISOString(),
+    });
     return NextResponse.json(
       {
         ok: false,

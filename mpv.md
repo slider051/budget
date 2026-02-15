@@ -113,6 +113,7 @@
   8. 분석 집계 1차 서버화(`/analysis -> /api/analysis/annual`)
   9. 분석 집계 2차 코드 완료(RPC SQL + fallback-safe API)
   10. WAF 운영 준비 완료(차단 로그 강화 + `WAF_RUNBOOK.md`)
+  11. Cron API 구조 로그 강화(`trigger/requestId/start/completed/failed`)
 - 다음 작업:
   1. `Vercel Cron -> API -> RPC` 연결
   2. Vercel Cron 자동 실행 로그 확인
