@@ -1,4 +1,4 @@
--- Phase 3: Annual analysis aggregation via RPC (server-side)
+﻿-- Phase 3: Annual analysis aggregation via RPC (server-side)
 
 create index if not exists idx_transactions_user_date
   on public.transactions (user_id, date);
@@ -94,7 +94,7 @@ begin
     jsonb_agg(
       jsonb_build_object(
         'month', to_char(make_date(p_year, merged.month_num, 1), 'YYYY-MM'),
-        'monthLabel', merged.month_num::text || '월',
+        'monthLabel', merged.month_num::text || ' month',
         'income', merged.income,
         'expense', merged.expense,
         'netSavings', merged.net_savings,
@@ -188,3 +188,4 @@ $$;
 revoke all on function public.get_annual_analysis_payload(integer) from public;
 grant execute on function public.get_annual_analysis_payload(integer) to authenticated;
 grant execute on function public.get_annual_analysis_payload(integer) to service_role;
+
