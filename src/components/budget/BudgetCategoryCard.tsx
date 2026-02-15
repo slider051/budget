@@ -44,7 +44,7 @@ export default function BudgetCategoryCard({
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow">
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow max-w-md">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           {icon && <span className="text-2xl">{icon}</span>}

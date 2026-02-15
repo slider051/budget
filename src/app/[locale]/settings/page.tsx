@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -11,6 +12,7 @@ import type { ImportMode } from "@/types/backup";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const t = useTranslations("settings");
   const [importMode, setImportMode] = useState<ImportMode>("replace");
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -21,15 +23,14 @@ export default function SettingsPage() {
   const handleExport = async () => {
     try {
       await downloadBackup();
-      setMessage({
-        type: "success",
-        text: "백업 파일이 다운로드되었습니다",
-      });
+      setMessage({ type: "success", text: t("backupSuccess") });
       setTimeout(() => setMessage(null), 3000);
     } catch (error) {
       setMessage({
         type: "error",
-        text: `Export 실패: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
+        text: t("exportFailed", {
+          error: error instanceof Error ? error.message : "Unknown error",
+        }),
       });
     }
   };
@@ -48,19 +49,23 @@ export default function SettingsPage() {
       if (result.success) {
         setMessage({
           type: "success",
-          text: `${result.message} (거래: ${result.imported?.transactions ?? 0}, 예산: ${result.imported?.budgets ?? 0}, 구독: ${result.imported?.subscriptions ?? 0})`,
+          text: t("importSuccess", {
+            message: result.message,
+            transactions: result.imported?.transactions ?? 0,
+            budgets: result.imported?.budgets ?? 0,
+            subscriptions: result.imported?.subscriptions ?? 0,
+          }),
         });
         setTimeout(() => setMessage(null), 5000);
       } else {
-        setMessage({
-          type: "error",
-          text: result.message,
-        });
+        setMessage({ type: "error", text: result.message });
       }
     } catch (error) {
       setMessage({
         type: "error",
-        text: `파일 읽기 실패: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
+        text: t("fileReadError", {
+          error: error instanceof Error ? error.message : "Unknown error",
+        }),
       });
     } finally {
       setIsImporting(false);
@@ -70,29 +75,22 @@ export default function SettingsPage() {
 
   const handleResetAlerts = () => {
     clearAllAlerts();
-    setMessage({
-      type: "success",
-      text: "예산 알림이 초기화되었습니다",
-    });
+    setMessage({ type: "success", text: t("alertsResetSuccess") });
     setTimeout(() => setMessage(null), 3000);
   };
 
   return (
     <div>
-      <PageHeader
-        title="Settings"
-        description="Manage your data and preferences"
-      />
+      <PageHeader title={t("title")} description={t("description")} />
 
       <div className="space-y-6 max-w-3xl">
         <Card>
           <div className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              테마 설정
+              {t("theme")}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              화면 테마를 선택하세요. 시스템 설정에 따르거나 수동으로 선택할 수
-              있습니다.
+              {t("themeDesc")}
             </p>
             <div className="space-y-2">
               <label className="flex items-center">
@@ -107,7 +105,7 @@ export default function SettingsPage() {
                   className="mr-2"
                 />
                 <span className="text-sm dark:text-gray-300">
-                  <strong>System</strong> - 시스템 설정 따르기
+                  <strong>System</strong> - {t("themeSystem")}
                 </span>
               </label>
               <label className="flex items-center">
@@ -122,7 +120,7 @@ export default function SettingsPage() {
                   className="mr-2"
                 />
                 <span className="text-sm dark:text-gray-300">
-                  <strong>Light</strong> - 라이트 모드
+                  <strong>Light</strong> - {t("themeLight")}
                 </span>
               </label>
               <label className="flex items-center">
@@ -137,7 +135,7 @@ export default function SettingsPage() {
                   className="mr-2"
                 />
                 <span className="text-sm dark:text-gray-300">
-                  <strong>Dark</strong> - 다크 모드
+                  <strong>Dark</strong> - {t("themeDark")}
                 </span>
               </label>
             </div>
@@ -147,29 +145,28 @@ export default function SettingsPage() {
         <Card>
           <div className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              데이터 백업
+              {t("backup")}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              모든 거래 내역과 예산 데이터를 JSON 파일로 다운로드합니다.
-              브라우저 데이터가 삭제되기 전에 정기적으로 백업하세요.
+              {t("backupDesc")}
             </p>
-            <Button onClick={handleExport}>Export 백업 파일 다운로드</Button>
+            <Button onClick={handleExport}>{t("exportBackup")}</Button>
           </div>
         </Card>
 
         <Card>
           <div className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              데이터 복원
+              {t("restore")}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              백업 파일을 업로드하여 데이터를 복원합니다.
+              {t("restoreDesc")}
             </p>
 
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Import 모드
+                  {t("importMode")}
                 </label>
                 <div className="space-y-2">
                   <label className="flex items-center">
@@ -184,8 +181,8 @@ export default function SettingsPage() {
                       className="mr-2"
                     />
                     <span className="text-sm">
-                      <strong>Replace (전체 덮어쓰기)</strong> - 기존 데이터를
-                      모두 삭제하고 백업 파일로 교체합니다
+                      <strong>{t("replaceMode")}</strong> -{" "}
+                      {t("replaceModeDesc")}
                     </span>
                   </label>
                   <label className="flex items-center">
@@ -200,8 +197,7 @@ export default function SettingsPage() {
                       className="mr-2"
                     />
                     <span className="text-sm">
-                      <strong>Merge (병합)</strong> - 기존 데이터를 유지하고
-                      백업 파일의 데이터를 추가/업데이트합니다
+                      <strong>{t("mergeMode")}</strong> - {t("mergeModeDesc")}
                     </span>
                   </label>
                 </div>
@@ -222,9 +218,7 @@ export default function SettingsPage() {
                     disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 {isImporting && (
-                  <p className="mt-2 text-sm text-gray-500">
-                    Import 중입니다...
-                  </p>
+                  <p className="mt-2 text-sm text-gray-500">{t("importing")}</p>
                 )}
               </div>
             </div>
@@ -241,9 +235,7 @@ export default function SettingsPage() {
           >
             <p className="text-sm font-medium">{message.text}</p>
             {message.type === "error" && (
-              <p className="text-xs mt-1">
-                문제가 계속되면 백업 파일이 손상되었는지 확인하세요.
-              </p>
+              <p className="text-xs mt-1">{t("filePersistError")}</p>
             )}
           </div>
         )}
@@ -251,14 +243,13 @@ export default function SettingsPage() {
         <Card>
           <div className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              예산 알림 초기화
+              {t("resetAlerts")}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              예산 90% 초과 알림을 모두 초기화합니다. 다시 알림을 받을 수
-              있습니다.
+              {t("resetAlertsDesc")}
             </p>
             <Button onClick={handleResetAlerts} variant="outline">
-              알림 초기화
+              {t("resetAlertsButton")}
             </Button>
           </div>
         </Card>
@@ -266,16 +257,13 @@ export default function SettingsPage() {
         <Card>
           <div className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              주의사항
+              {t("cautions")}
             </h2>
             <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside">
-              <li>Replace 모드는 현재 데이터를 완전히 삭제합니다</li>
-              <li>Merge 모드는 동일 ID/월 데이터를 백업 파일로 덮어씁니다</li>
-              <li>백업 파일은 안전한 장소에 보관하세요</li>
-              <li>
-                다른 기기로 이동 시 백업 파일을 사용하여 데이터를 옮길 수
-                있습니다
-              </li>
+              <li>{t("caution1")}</li>
+              <li>{t("caution2")}</li>
+              <li>{t("caution3")}</li>
+              <li>{t("caution4")}</li>
             </ul>
           </div>
         </Card>

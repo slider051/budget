@@ -2,11 +2,13 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations("login");
   const nextPath = useMemo(() => {
     const next = searchParams.get("next");
     return next && next.startsWith("/") ? next : "/";
@@ -47,10 +49,8 @@ function LoginContent() {
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-md items-center justify-center">
       <div className="w-full rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900">로그인</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          가계부 데이터를 사용하려면 Google 로그인으로 계속하세요.
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+        <p className="mt-2 text-sm text-gray-600">{t("description")}</p>
 
         <button
           type="button"
@@ -58,7 +58,7 @@ function LoginContent() {
           disabled={isLoading}
           className="mt-6 w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isLoading ? "Google 로그인 중..." : "Google로 로그인"}
+          {isLoading ? t("googleLoggingIn") : t("googleLogin")}
         </button>
 
         {error && (
@@ -73,7 +73,11 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="py-20 text-center text-gray-500">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="py-20 text-center text-gray-500">Loading...</div>
+      }
+    >
       <LoginContent />
     </Suspense>
   );

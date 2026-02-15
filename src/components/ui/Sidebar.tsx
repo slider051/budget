@@ -1,26 +1,49 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
+import { routing } from "@/i18n/routing";
 
-const menuItems = [
-  { href: "/", label: "대시보드", icon: "📊" },
-  { href: "/budget", label: "예산 현황", icon: "💰" },
-  { href: "/transactions", label: "거래내역", icon: "📝" },
-  { href: "/fixed-expenses/new", label: "고정지출", icon: "🔁" },
-  { href: "/subscriptions", label: "구독관리", icon: "🎟️" },
-  { href: "/analysis", label: "연간 분석", icon: "📈" },
-  { href: "/settings", label: "설정", icon: "⚙️" },
+interface MenuItem {
+  href: string;
+  labelKey: string;
+  icon: string;
+}
+
+const menuItems: readonly MenuItem[] = [
+  { href: "/", labelKey: "dashboard", icon: "📊" },
+  { href: "/budget", labelKey: "budget", icon: "💰" },
+  { href: "/transactions", labelKey: "transactions", icon: "📝" },
+  { href: "/fixed-expenses/new", labelKey: "fixedExpenses", icon: "🔁" },
+  { href: "/subscriptions", labelKey: "subscriptions", icon: "🎟️" },
+  { href: "/analysis", labelKey: "analysis", icon: "📈" },
+  { href: "/settings", labelKey: "settings", icon: "⚙️" },
 ];
+
+function stripLocalePrefix(pathname: string): string {
+  for (const locale of routing.locales) {
+    const prefix = `/${locale}`;
+    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
+      return pathname.slice(prefix.length) || "/";
+    }
+  }
+  return pathname;
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations("nav");
+  const tc = useTranslations("common");
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  if (pathname.startsWith("/login") || pathname.startsWith("/auth")) {
+  const strippedPath = stripLocalePrefix(pathname);
+
+  if (strippedPath.startsWith("/login") || strippedPath.startsWith("/auth")) {
     return null;
   }
 
@@ -31,6 +54,12 @@ export default function Sidebar() {
     router.push("/login");
     router.refresh();
     setIsSigningOut(false);
+  };
+
+  const handleSwitchLocale = () => {
+    const nextLocale = locale === "ko" ? "en" : "ko";
+    const newPath = `/${nextLocale}${strippedPath}`;
+    router.push(newPath);
   };
 
   return (
@@ -50,7 +79,7 @@ export default function Sidebar() {
       {/* Navigation */}
       <nav className="space-y-2">
         {menuItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = strippedPath === item.href;
           return (
             <Link
               key={item.href}
@@ -62,20 +91,27 @@ export default function Sidebar() {
               }`}
             >
               <span className="text-xl">{item.icon}</span>
-              <span>{item.label}</span>
+              <span>{t(item.labelKey)}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-auto pt-6">
+      <div className="mt-auto pt-6 space-y-2">
+        <button
+          type="button"
+          onClick={handleSwitchLocale}
+          className="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+        >
+          {tc("switchLang")}
+        </button>
         <button
           type="button"
           onClick={handleSignOut}
           disabled={isSigningOut}
           className="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
         >
-          {isSigningOut ? "로그아웃 중..." : "로그아웃"}
+          {isSigningOut ? tc("loggingOut") : tc("logout")}
         </button>
       </div>
     </aside>

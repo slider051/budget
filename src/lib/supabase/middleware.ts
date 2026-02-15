@@ -5,10 +5,22 @@ import { hasSupabaseEnv } from "./env";
 const PUBLIC_PATHS = ["/login", "/auth/callback"];
 const AUTH_BYPASS_PATHS = ["/api/cron"];
 
+/** Strip locale prefix (e.g. "/ko/login" → "/login") */
+function stripLocalePrefix(pathname: string): string {
+  const localePattern = /^\/(ko|en)(\/|$)/;
+  const match = pathname.match(localePattern);
+  if (match) {
+    const rest = pathname.slice(match[0].length - (match[2] === "/" ? 1 : 0));
+    return rest || "/";
+  }
+  return pathname;
+}
+
 function isPublicPath(pathname: string): boolean {
+  const stripped = stripLocalePrefix(pathname);
   return PUBLIC_PATHS.some(
     (publicPath) =>
-      pathname === publicPath || pathname.startsWith(`${publicPath}/`),
+      stripped === publicPath || stripped.startsWith(`${publicPath}/`),
   );
 }
 
@@ -71,13 +83,15 @@ export async function updateSession(request: NextRequest) {
 
   const isPublic = isPublicPath(pathname);
 
+  const strippedPathname = stripLocalePrefix(pathname);
+
   if (!user && !isPublic) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", getSafeNext(pathname, search));
     return NextResponse.redirect(loginUrl);
   }
 
-  if (user && pathname === "/login") {
+  if (user && strippedPathname === "/login") {
     const next = request.nextUrl.searchParams.get("next");
     const safeNext = next && next.startsWith("/") ? next : "/";
     return NextResponse.redirect(new URL(safeNext, request.url));

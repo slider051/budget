@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useBudget } from "@/hooks/useBudget";
 import { useUI } from "@/hooks/useUI";
 import { useBudgetData } from "@/hooks/useBudgetData";
@@ -33,6 +34,8 @@ function BudgetContent() {
   const { state } = useBudget();
   const { selectedMonth } = useUI();
   const searchParams = useSearchParams();
+  const t = useTranslations("budget");
+  const tc = useTranslations("common");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { budget, refresh } = useBudgetData(selectedMonth);
 
@@ -94,18 +97,16 @@ function BudgetContent() {
   );
   const remaining = totalBudget - totalSpent;
 
-  // Top expenses
   const topExpenses = useMemo(() => {
     const top = getTopExpensesByMonth(state.transactions, selectedMonth, 7);
     return top.map((item) => ({
       category: CATEGORY_EN_NAMES[item.category] || item.category,
       amount: item.amount,
       icon: CATEGORY_ICONS[item.category] || "💸",
-      percentage: 0, // Can add month-over-month comparison later
+      percentage: 0,
     }));
   }, [state.transactions, selectedMonth]);
 
-  // Top income
   const topIncome = useMemo(() => {
     const top = getTopIncomeByMonth(state.transactions, selectedMonth, 7);
     return top.map((item) => ({
@@ -124,7 +125,7 @@ function BudgetContent() {
 
   return (
     <div>
-      <PageHeader title="Budget" description="Create and track your budgets" />
+      <PageHeader title={t("title")} description={t("description")} />
 
       <div className="mb-6 space-y-4">
         <div className="flex items-center justify-between">
@@ -133,7 +134,7 @@ function BudgetContent() {
             onClick={() => setIsModalOpen(true)}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
           >
-            + Add new budget
+            {t("addNew")}
           </button>
         </div>
         <BudgetFilterControls filters={filters} />
@@ -142,8 +143,7 @@ function BudgetContent() {
       {!hasBudget && (
         <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
           <p className="text-sm text-yellow-900">
-            <strong>{selectedMonth}</strong> 예산이 설정되지 않았습니다. &quot;+
-            Add new budget&quot; 버튼을 눌러 예산을 설정하세요.
+            {t("noBudget", { month: selectedMonth })}
           </p>
         </div>
       )}
@@ -152,17 +152,23 @@ function BudgetContent() {
         {/* Main Content Area */}
         <div className="min-w-0">
           <div className="mb-4 text-sm text-gray-600">
-            {filteredCategoryData.length} items
+            {filteredCategoryData.length} {tc("items")}
             {filteredCategoryData.length !== categoryData.length && (
               <span className="text-gray-400">
                 {" "}
-                (전체 {categoryData.length}개 중)
+                ({t("itemCountFiltered", { total: categoryData.length })})
               </span>
             )}
           </div>
 
           {/* Category Cards Grid */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div
+            className="grid gap-6"
+            style={{
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(min(100%, 26rem), 1fr))",
+            }}
+          >
             {filteredCategoryData.map((data) => (
               <BudgetCategoryCard
                 key={data.category}
@@ -189,17 +195,17 @@ function BudgetContent() {
           )}
 
           {topExpenses.length > 0 && (
-            <TopExpensesList expenses={topExpenses} title="Most expenses" />
+            <TopExpensesList expenses={topExpenses} title={t("mostExpenses")} />
           )}
 
           {topIncome.length > 0 && (
-            <TopExpensesList expenses={topIncome} title="Top income" />
+            <TopExpensesList expenses={topIncome} title={t("topIncome")} />
           )}
 
           {totalIncome > 0 && (
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                이번 달 수입
+                {t("monthlyIncome")}
               </h3>
               <div className="text-3xl font-bold text-green-600">
                 ₩{totalIncome.toLocaleString()}
@@ -220,19 +226,20 @@ function BudgetContent() {
   );
 }
 
+function BudgetFallback() {
+  const t = useTranslations("budget");
+  const tc = useTranslations("common");
+  return (
+    <div>
+      <PageHeader title={t("title")} description={t("description")} />
+      <div className="text-center py-12 text-gray-500">{tc("loading")}</div>
+    </div>
+  );
+}
+
 export default function BudgetPage() {
   return (
-    <Suspense
-      fallback={
-        <div>
-          <PageHeader
-            title="Budget"
-            description="Create and track your budgets"
-          />
-          <div className="text-center py-12 text-gray-500">Loading...</div>
-        </div>
-      }
-    >
+    <Suspense fallback={<BudgetFallback />}>
       <BudgetContent />
     </Suspense>
   );

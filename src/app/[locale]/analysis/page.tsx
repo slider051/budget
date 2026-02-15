@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
 import AnnualKPICards from "@/components/analysis/AnnualKPICards";
@@ -17,6 +18,8 @@ interface AnnualAnalysisApiResponse extends AnnualAnalysisPayload {
 function AnalysisContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const t = useTranslations("analysis");
+  const tc = useTranslations("common");
   const [analysis, setAnalysis] = useState<AnnualAnalysisPayload | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,31 +95,31 @@ function AnalysisContent() {
 
   return (
     <div>
-      <PageHeader
-        title="Annual Analysis"
-        description="Analyze your income and expenses by year"
-      />
+      <PageHeader title={t("title")} description={t("description")} />
 
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button onClick={handlePreviousYear} variant="outline">
-            이전
+            {tc("previous")}
           </Button>
-          <h2 className="text-2xl font-bold text-gray-900">{selectedYear}년</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {selectedYear}
+            {tc("year")}
+          </h2>
           <Button onClick={handleNextYear} variant="outline">
-            다음
+            {tc("next")}
           </Button>
         </div>
         {selectedYear !== currentYear && (
           <Button onClick={handleCurrentYear} variant="secondary">
-            현재 연도
+            {tc("currentYear")}
           </Button>
         )}
       </div>
 
       {isLoading && (
         <div className="py-12 text-center text-gray-500">
-          Loading analysis...
+          {t("loadingAnalysis")}
         </div>
       )}
 
@@ -134,12 +137,12 @@ function AnalysisContent() {
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <CategoryAnnualTotals
-              title="카테고리별 지출 Top"
+              title={t("expenseByCategory")}
               totals={analysis.expenseTotals}
               colorClass="text-red-600"
             />
             <CategoryAnnualTotals
-              title="카테고리별 수입 Top"
+              title={t("incomeByCategory")}
               totals={analysis.incomeTotals}
               colorClass="text-green-600"
             />
@@ -150,19 +153,20 @@ function AnalysisContent() {
   );
 }
 
+function AnalysisFallback() {
+  const t = useTranslations("analysis");
+  const tc = useTranslations("common");
+  return (
+    <div>
+      <PageHeader title={t("title")} description={t("description")} />
+      <div className="py-12 text-center text-gray-500">{tc("loading")}</div>
+    </div>
+  );
+}
+
 export default function AnalysisPage() {
   return (
-    <Suspense
-      fallback={
-        <div>
-          <PageHeader
-            title="Annual Analysis"
-            description="Analyze your income and expenses by year"
-          />
-          <div className="py-12 text-center text-gray-500">Loading...</div>
-        </div>
-      }
-    >
+    <Suspense fallback={<AnalysisFallback />}>
       <AnalysisContent />
     </Suspense>
   );

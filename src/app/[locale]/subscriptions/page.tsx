@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { SubscriptionCard } from "@/components/subscriptions/SubscriptionCard";
 import {
   CUSTOM_SERVICE_KEY,
@@ -56,6 +57,7 @@ function createPreviewSubscription(form: SubscriptionFormState): Subscription {
 }
 
 export default function SubscriptionsPage() {
+  const t = useTranslations("subscriptions");
   const {
     subscriptions,
     isLoading,
@@ -96,7 +98,7 @@ export default function SubscriptionsPage() {
     [previewSubscription],
   );
   const previewDateLabel =
-    previewDateInfo.reason === "end_date" ? "종료일" : "다음 결제일(예상)";
+    previewDateInfo.reason === "end_date" ? t("expiry") : t("nextPayment");
   const previewCycleLabel = getCyclePaymentLabel(
     previewSubscription.billingCycle,
     previewSubscription.customCycleMonths,
@@ -165,37 +167,37 @@ export default function SubscriptionsPage() {
       const parsedCustomMonths = Number(form.customCycleMonths);
 
       if (!form.serviceName.trim()) {
-        setErrorMessage("서비스 이름을 입력해 주세요.");
+        setErrorMessage(t("validationServiceName"));
         return;
       }
       if (!Number.isFinite(parsedDefaultPrice) || parsedDefaultPrice < 0) {
-        setErrorMessage("기본 가격은 0 이상의 숫자로 입력해 주세요.");
+        setErrorMessage(t("validationDefaultPrice"));
         return;
       }
       if (!Number.isFinite(parsedActualPrice) || parsedActualPrice < 0) {
-        setErrorMessage("결제 가격은 0 이상의 숫자로 입력해 주세요.");
+        setErrorMessage(t("validationActualPrice"));
         return;
       }
       if (
         !Number.isFinite(parsedParticipantCount) ||
         parsedParticipantCount <= 0
       ) {
-        setErrorMessage("사용자 수는 1 이상으로 입력해 주세요.");
+        setErrorMessage(t("validationParticipant"));
         return;
       }
       if (!form.billingStartDate) {
-        setErrorMessage("결제 시작날짜를 입력해 주세요.");
+        setErrorMessage(t("validationStartDate"));
         return;
       }
       if (
         form.billingCycle === "custom" &&
         (!Number.isFinite(parsedCustomMonths) || parsedCustomMonths <= 0)
       ) {
-        setErrorMessage("그외 주기 월 수는 1 이상으로 입력해 주세요.");
+        setErrorMessage(t("validationCustomCycle"));
         return;
       }
       if (form.endDate && form.endDate < form.billingStartDate) {
-        setErrorMessage("종료일은 결제 시작날짜와 같거나 이후여야 합니다.");
+        setErrorMessage(t("validationEndDate"));
         return;
       }
 
@@ -239,19 +241,18 @@ export default function SubscriptionsPage() {
         await upsertSubscription(nextSubscription);
         resetForm();
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "구독 저장에 실패했습니다.";
+        const message = error instanceof Error ? error.message : t("saveError");
         setErrorMessage(message);
       } finally {
         setIsSubmitting(false);
       }
     },
-    [editingId, form, resetForm, subscriptions, upsertSubscription],
+    [editingId, form, resetForm, subscriptions, upsertSubscription, t],
   );
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!confirm("이 구독을 삭제하시겠습니까?")) {
+      if (!confirm(t("deleteConfirm"))) {
         return;
       }
 
@@ -260,24 +261,23 @@ export default function SubscriptionsPage() {
         await deleteSubscription(id);
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "구독 삭제에 실패했습니다.";
+          error instanceof Error ? error.message : t("deleteError");
         setErrorMessage(message);
       } finally {
         setDeletingId(null);
       }
     },
-    [deleteSubscription],
+    [deleteSubscription, t],
   );
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
-          구독관리
+          {t("title")}
         </h1>
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          결제 가격과 사용자 수를 기준으로 실제 부담 금액/다음 결제일을
-          추적합니다.
+          {t("description")}
         </p>
       </div>
 
@@ -291,13 +291,14 @@ export default function SubscriptionsPage() {
         {(["KRW", "USD", "JPY"] as const).map((currency) => (
           <Card key={currency} className="p-5">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              월 환산 합계 ({currency})
+              {t("monthlyTotal")} ({currency})
             </p>
             <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">
               {formatMoney(summary[currency].monthly, currency)}
             </p>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              연 환산 {formatMoney(summary[currency].yearly, currency)}
+              {t("yearlyTotal")}{" "}
+              {formatMoney(summary[currency].yearly, currency)}
             </p>
           </Card>
         ))}
@@ -324,22 +325,22 @@ export default function SubscriptionsPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              등록된 구독
+              {t("registered")}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              총 {subscriptions.length}건
+              {t("totalCount", { count: subscriptions.length })}
             </p>
           </div>
 
           {isLoading && (
             <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-              구독 데이터를 불러오는 중입니다...
+              {t("loadingData")}
             </div>
           )}
 
           {!isLoading && sortedSubscriptions.length === 0 && (
             <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-              아직 등록된 구독이 없습니다.
+              {t("noSubscriptions")}
             </div>
           )}
 

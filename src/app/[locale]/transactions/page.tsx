@@ -2,12 +2,13 @@
 
 import { Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useBudget } from "@/hooks/useBudget";
 import TransactionFilterBar from "@/components/transactions/TransactionFilterBar";
 import TransactionList from "@/components/budget/TransactionList";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import Button from "@/components/ui/Button";
 import { formatCurrency } from "@/lib/formatters";
 import type { TransactionFilterState } from "@/types/filter";
@@ -20,6 +21,7 @@ import {
 function TransactionsContent() {
   const { state } = useBudget();
   const searchParams = useSearchParams();
+  const t = useTranslations("transactions");
 
   const filters: TransactionFilterState = useMemo(() => {
     const q = searchParams.get("q") || "";
@@ -73,11 +75,11 @@ function TransactionsContent() {
   return (
     <div>
       <PageHeader
-        title="거래내역"
-        description="전체 수입과 지출 내역을 확인하세요"
+        title={t("title")}
+        description={t("description")}
         action={
           <Link href="/transactions/new">
-            <Button size="sm">+ 새 거래 추가</Button>
+            <Button size="sm">{t("addNew")}</Button>
           </Link>
         }
       />
@@ -85,50 +87,55 @@ function TransactionsContent() {
       <div className="space-y-6">
         <TransactionFilterBar filters={filters} />
 
-        <Card>
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <div>
-                <p className="text-sm text-gray-600">검색 결과</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {summary.count}건
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">총 수입</p>
-                <p className="text-xl font-semibold text-green-600">
-                  {formatCurrency(summary.totalIncome)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">총 지출</p>
-                <p className="text-xl font-semibold text-red-600">
-                  {formatCurrency(summary.totalExpense)}
-                </p>
+        <div className="max-w-4xl">
+          <Card>
+            <div className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <div>
+                  <p className="text-sm text-gray-600">{t("searchResults")}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {t("count", { count: summary.count })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">{t("totalIncome")}</p>
+                  <p className="text-xl font-semibold text-green-600">
+                    {formatCurrency(summary.totalIncome)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">{t("totalExpense")}</p>
+                  <p className="text-xl font-semibold text-red-600">
+                    {formatCurrency(summary.totalExpense)}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </Card>
+          </Card>
 
-        <TransactionList transactions={filteredTransactions} />
+          <div className="mt-6">
+            <TransactionList transactions={filteredTransactions} />
+          </div>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function TransactionsFallback() {
+  const t = useTranslations("transactions");
+  const tc = useTranslations("common");
+  return (
+    <div>
+      <PageHeader title={t("title")} description={t("description")} />
+      <div className="text-center py-12 text-gray-500">{tc("loading")}</div>
     </div>
   );
 }
 
 export default function TransactionsPage() {
   return (
-    <Suspense
-      fallback={
-        <div>
-          <PageHeader
-            title="거래내역"
-            description="전체 수입과 지출 내역을 확인하세요"
-          />
-          <div className="text-center py-12 text-gray-500">Loading...</div>
-        </div>
-      }
-    >
+    <Suspense fallback={<TransactionsFallback />}>
       <TransactionsContent />
     </Suspense>
   );
