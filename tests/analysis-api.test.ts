@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildAnnualAnalysisPayload,
+  parseAnnualAnalysisPayload,
   parseAnalysisYear,
 } from "../src/lib/analysis/annualApi.ts";
 import type { MonthlyBudget } from "../src/types/monthlyBudget.ts";
@@ -64,4 +65,22 @@ test("buildAnnualAnalysisPayload aggregates income, expense, and budgets", () =>
   assert.equal(payload.expenseTotals[0]?.amount, 300);
   assert.equal(payload.incomeTotals[0]?.category, "Salary");
   assert.equal(payload.incomeTotals[0]?.amount, 1000);
+});
+
+test("parseAnnualAnalysisPayload validates RPC payload shape", () => {
+  const parsed = parseAnnualAnalysisPayload({
+    year: 2026,
+    summary: {
+      year: 2026,
+      totalIncome: 1000,
+      totalExpense: 300,
+      netSavings: 700,
+    },
+    monthlySummaries: [],
+    expenseTotals: [],
+    incomeTotals: [],
+  });
+
+  assert.equal(parsed.year, 2026);
+  assert.equal(parsed.summary.netSavings, 700);
 });

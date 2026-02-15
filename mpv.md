@@ -86,7 +86,8 @@
 
 7. [ ] 분석 집계 서버화
 - [x] 1차: `/api/analysis/annual` 서버 집계 API 전환(연간 KPI/월별/카테고리 합계)
-- [ ] 2차: View 또는 RPC로 이전 + RLS/권한/인덱스 최적화
+- [x] 2차 코드: RPC 함수/인덱스 SQL + API `rpc 우선 -> fallback` 경로 구현
+- [ ] 2차 운영: Supabase migration 적용 + RPC source 실운영 확인
 
 8. [ ] 서버 입력 검증 통합
 - Zod 검증 + DB 제약 이중 방어.
@@ -110,10 +111,11 @@
   6. `Asia/Seoul` 월 경계 단위 테스트 추가(`test:kst`)
   7. Phase 3 1차 완료(localStorage 데이터 fallback 제거 + lint 차단)
   8. 분석 집계 1차 서버화(`/analysis -> /api/analysis/annual`)
+  9. 분석 집계 2차 코드 완료(RPC SQL + fallback-safe API)
 - 다음 작업:
   1. `Vercel Cron -> API -> RPC` 연결
   2. Vercel Cron 자동 실행 로그 확인
-  3. 분석 집계 2차(View/RPC + 인덱스) 설계 및 구현
+  3. Supabase SQL migration 적용 후 `/api/analysis/annual` `source=rpc` 확인
   4. Vercel WAF 룰셋(대시보드) 적용 및 운영 로그 기반 튜닝
 
 ## MVP 1.5 실행 플랜
@@ -131,6 +133,7 @@
 6. [x] localStorage fallback 제거 + lint 금지 규칙
 7. [ ] 분석 집계 View/RPC 서버화 + RLS/인덱스 검증
 - 1차: `/api/analysis/annual` 서버 집계 API 적용 완료
+- 2차 코드: `supabase/migrations/20260215_analysis_payload_rpc.sql` 추가 완료
 
 ### Phase 4: 운영/게이트
 8. [ ] Zod + DB 제약 에러 매핑 정리

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { buildAnnualAnalysisPayload, parseAnalysisYear } from "@/lib/analysis/annualApi";
+import {
+  buildAnnualAnalysisPayload,
+  parseAnalysisYear,
+  parseAnnualAnalysisPayload,
+} from "@/lib/analysis/annualApi";
 import { createClient } from "@/lib/supabase/server";
 import type { Transaction } from "@/types/budget";
 import type { MonthlyBudget } from "@/types/monthlyBudget";
@@ -18,6 +22,11 @@ interface MonthlyBudgetRow {
   month: string;
   categories: unknown;
   updated_at: string;
+}
+
+interface RpcErrorLike {
+  code?: string;
+  message: string;
 }
 
 function toTransaction(row: TransactionRow): Transaction {
@@ -53,6 +62,55 @@ function toBudget(row: MonthlyBudgetRow): MonthlyBudget {
   };
 }
 
+function isMissingRpcError(error: RpcErrorLike | null): boolean {
+  if (!error) return false;
+  return (
+    error.code === "42883" ||
+    error.code === "PGRST202" ||
+    error.message.includes("Could not find the function") ||
+    error.message.includes("get_annual_analysis_payload")
+  );
+}
+
+async function loadRawAnalysisData(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  year: number,
+) {
+  const startDate = `${year}-01-01`;
+  const endDate = `${year}-12-31`;
+  const yearLike = `${year}-%`;
+
+  const [
+    { data: transactionRows, error: transactionError },
+    { data: budgetRows, error: budgetError },
+  ] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select("id,type,amount,category,description,date,created_at")
+      .gte("date", startDate)
+      .lte("date", endDate),
+    supabase
+      .from("monthly_budgets")
+      .select("month,categories,updated_at")
+      .like("month", yearLike),
+  ]);
+
+  if (transactionError) {
+    throw new Error(transactionError.message);
+  }
+
+  if (budgetError) {
+    throw new Error(budgetError.message);
+  }
+
+  const transactions = ((transactionRows ?? []) as TransactionRow[]).map(
+    toTransaction,
+  );
+  const budgets = ((budgetRows ?? []) as MonthlyBudgetRow[]).map(toBudget);
+
+  return buildAnnualAnalysisPayload(year, transactions, budgets);
+}
+
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
@@ -71,40 +129,30 @@ export async function GET(request: Request) {
 
     const nowYear = new Date().getFullYear();
     const requestUrl = new URL(request.url);
-    const year = parseAnalysisYear(requestUrl.searchParams.get("year"), nowYear);
-
-    const startDate = `${year}-01-01`;
-    const endDate = `${year}-12-31`;
-    const yearLike = `${year}-%`;
-
-    const [{ data: transactionRows, error: transactionError }, { data: budgetRows, error: budgetError }] =
-      await Promise.all([
-        supabase
-          .from("transactions")
-          .select("id,type,amount,category,description,date,created_at")
-          .gte("date", startDate)
-          .lte("date", endDate),
-        supabase
-          .from("monthly_budgets")
-          .select("month,categories,updated_at")
-          .like("month", yearLike),
-      ]);
-
-    if (transactionError) {
-      throw new Error(transactionError.message);
-    }
-
-    if (budgetError) {
-      throw new Error(budgetError.message);
-    }
-
-    const transactions = ((transactionRows ?? []) as TransactionRow[]).map(
-      toTransaction,
+    const year = parseAnalysisYear(
+      requestUrl.searchParams.get("year"),
+      nowYear,
     );
-    const budgets = ((budgetRows ?? []) as MonthlyBudgetRow[]).map(toBudget);
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      "get_annual_analysis_payload",
+      { p_year: year },
+    );
 
-    const payload = buildAnnualAnalysisPayload(year, transactions, budgets);
-    return NextResponse.json({ ok: true, ...payload });
+    if (!rpcError) {
+      const payload = parseAnnualAnalysisPayload(rpcData);
+      return NextResponse.json({ ok: true, source: "rpc", ...payload });
+    }
+
+    if (!isMissingRpcError(rpcError as RpcErrorLike)) {
+      throw new Error(rpcError.message);
+    }
+
+    console.warn(
+      "[analysis/annual] rpc missing, falling back to raw query path",
+      rpcError.message,
+    );
+    const payload = await loadRawAnalysisData(supabase, year);
+    return NextResponse.json({ ok: true, source: "raw-fallback", ...payload });
   } catch (error) {
     console.error("[analysis/annual] failed:", error);
     return NextResponse.json(

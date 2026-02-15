@@ -35,6 +35,12 @@ npm run test:analysis # 연간 분석 집계 단위 테스트
 - `API_RATE_LIMIT_MAX` (선택, 기본 `60`): `/api/*` 윈도우당 허용 요청 수
 - `CRON_RATE_LIMIT_MAX` (선택, 기본 `10`): `/api/cron/*` 윈도우당 허용 요청 수
 
+## Supabase SQL 적용(분석 RPC 2차)
+
+- 적용 파일: `supabase/migrations/20260215_analysis_payload_rpc.sql`
+- 롤백 파일: `supabase/migrations/20260215_analysis_payload_rpc_rollback.sql`
+- 적용 후 확인: `/api/analysis/annual?year=2026` 응답에서 `source`가 `rpc`인지 확인
+
 ## 최근 추가된 기능
 
 ### 거래내역 필터링 (IME 안정화)
