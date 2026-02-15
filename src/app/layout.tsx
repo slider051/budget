@@ -4,6 +4,7 @@ import { BudgetProvider } from "@/context/BudgetContext";
 import { UIProvider } from "@/context/UIContext";
 import Sidebar from "@/components/ui/Sidebar";
 import { ThemeClassApplier } from "@/components/ThemeClassApplier";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Qoint - Budget Tracker",
@@ -48,6 +49,7 @@ export default function RootLayout({
             </div>
           </BudgetProvider>
         </UIProvider>
+        <Analytics />
       </body>
     </html>
   );
