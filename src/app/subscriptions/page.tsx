@@ -39,7 +39,10 @@ function createPreviewSubscription(form: SubscriptionFormState): Subscription {
     logoUrl: form.logoUrl,
     defaultPrice: Number(form.defaultPrice) || 0,
     actualPrice: Number(form.actualPrice) || 0,
-    participantCount: Math.max(Math.floor(Number(form.participantCount) || 1), 1),
+    participantCount: Math.max(
+      Math.floor(Number(form.participantCount) || 1),
+      1,
+    ),
     currency: form.currency,
     billingCycle: cycle,
     customCycleMonths,
@@ -61,7 +64,9 @@ export default function SubscriptionsPage() {
     deleteSubscription,
   } = useSubscriptions();
 
-  const [form, setForm] = useState<SubscriptionFormState>(createInitialFormState);
+  const [form, setForm] = useState<SubscriptionFormState>(
+    createInitialFormState,
+  );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<Record<string, boolean>>({});
@@ -116,7 +121,9 @@ export default function SubscriptionsPage() {
       return;
     }
 
-    const preset = SUBSCRIPTION_PRESETS.find((item) => item.key === nextServiceKey);
+    const preset = SUBSCRIPTION_PRESETS.find(
+      (item) => item.key === nextServiceKey,
+    );
     if (!preset) return;
 
     setForm((prev) => ({
@@ -209,7 +216,9 @@ export default function SubscriptionsPage() {
         currency: form.currency,
         billingCycle: form.billingCycle,
         customCycleMonths:
-          form.billingCycle === "custom" ? Math.floor(parsedCustomMonths) : null,
+          form.billingCycle === "custom"
+            ? Math.floor(parsedCustomMonths)
+            : null,
         billingStartDate: form.billingStartDate,
         endDate: form.endDate || null,
         accountName: form.accountName.trim(),
@@ -230,7 +239,8 @@ export default function SubscriptionsPage() {
         await upsertSubscription(nextSubscription);
         resetForm();
       } catch (error) {
-        const message = error instanceof Error ? error.message : "구독 저장에 실패했습니다.";
+        const message =
+          error instanceof Error ? error.message : "구독 저장에 실패했습니다.";
         setErrorMessage(message);
       } finally {
         setIsSubmitting(false);
@@ -249,7 +259,8 @@ export default function SubscriptionsPage() {
         setDeletingId(id);
         await deleteSubscription(id);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "구독 삭제에 실패했습니다.";
+        const message =
+          error instanceof Error ? error.message : "구독 삭제에 실패했습니다.";
         setErrorMessage(message);
       } finally {
         setDeletingId(null);
@@ -265,7 +276,8 @@ export default function SubscriptionsPage() {
           구독관리
         </h1>
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          결제 가격과 사용자 수를 기준으로 실제 부담 금액/다음 결제일을 추적합니다.
+          결제 가격과 사용자 수를 기준으로 실제 부담 금액/다음 결제일을
+          추적합니다.
         </p>
       </div>
 
@@ -331,22 +343,26 @@ export default function SubscriptionsPage() {
             </div>
           )}
 
-          {sortedSubscriptions.map((subscription) => (
-            <SubscriptionCard
-              key={subscription.id}
-              subscription={subscription}
-              isLogoBroken={logoError[subscription.id] ?? false}
-              isMemoOpen={memoOpenMap[subscription.id] ?? false}
-              onLogoError={handleLogoError}
-              onToggleMemo={handleToggleMemo}
-              onEdit={handleEdit}
-              onDelete={() => {
-                if (deletingId) return;
-                void handleDelete(subscription.id);
-              }}
-              isDeleting={deletingId === subscription.id}
-            />
-          ))}
+          {!isLoading && sortedSubscriptions.length > 0 && (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {sortedSubscriptions.map((subscription) => (
+                <SubscriptionCard
+                  key={subscription.id}
+                  subscription={subscription}
+                  isLogoBroken={logoError[subscription.id] ?? false}
+                  isMemoOpen={memoOpenMap[subscription.id] ?? false}
+                  onLogoError={handleLogoError}
+                  onToggleMemo={handleToggleMemo}
+                  onEdit={handleEdit}
+                  onDelete={() => {
+                    if (deletingId) return;
+                    void handleDelete(subscription.id);
+                  }}
+                  isDeleting={deletingId === subscription.id}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </Card>
     </div>
