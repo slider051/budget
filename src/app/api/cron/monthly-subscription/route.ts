@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendOpsAlert } from "@/lib/alerts/opsAlert";
+import {
+  ApiRouteError,
+  buildApiErrorBody,
+  mapToApiRouteError,
+} from "@/lib/api/errors";
+import { parseYearMonthForApi } from "@/lib/api/validators";
 import { getKstYearMonth } from "@/lib/time/kst";
 
 interface GenerationResultRow {
@@ -56,17 +62,12 @@ export async function GET(request: Request) {
   }
 
   const requestUrl = new URL(request.url);
-  const yearMonth =
-    requestUrl.searchParams.get("yearMonth") ?? getKstYearMonth();
-
-  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(yearMonth)) {
-    return NextResponse.json(
-      { error: "Invalid yearMonth. Use YYYY-MM." },
-      { status: 400 },
-    );
-  }
+  const requestedYearMonth = requestUrl.searchParams.get("yearMonth");
+  let yearMonth = requestedYearMonth ?? getKstYearMonth();
 
   try {
+    yearMonth = parseYearMonthForApi(requestedYearMonth, yearMonth);
+
     console.info("[cron/monthly-subscription] started", {
       ...context,
       yearMonth,
@@ -79,7 +80,7 @@ export async function GET(request: Request) {
       .select("user_id");
 
     if (usersError) {
-      throw new Error(usersError.message);
+      throw usersError;
     }
 
     const userIds = Array.from(
@@ -104,7 +105,18 @@ export async function GET(request: Request) {
       );
 
       if (error) {
-        throw new Error(`RPC failed for user ${userId}: ${error.message}`);
+        throw new ApiRouteError({
+          status: 500,
+          code: "DATABASE_ERROR",
+          userMessage: "Batch execution failed.",
+          logMessage: `RPC failed for user ${userId}: ${error.message}`,
+          details: {
+            userId,
+            dbCode: error.code ?? "unknown",
+            hint: error.hint ?? null,
+            details: error.details ?? null,
+          },
+        });
       }
 
       const row = (data as GenerationResultRow[] | null)?.[0];
@@ -131,13 +143,15 @@ export async function GET(request: Request) {
 
     return NextResponse.json(responseBody);
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const mapped = mapToApiRouteError(error);
 
     console.error("[cron/monthly-subscription] failed", {
       ...context,
       yearMonth,
-      error: errorMessage,
+      status: mapped.status,
+      code: mapped.code,
+      error: mapped.logMessage,
+      details: mapped.details ?? null,
       timestamp: new Date().toISOString(),
     });
 
@@ -149,16 +163,14 @@ export async function GET(request: Request) {
         trigger: context.trigger,
         requestId: context.requestId,
         yearMonth,
-        error: errorMessage,
+        status: mapped.status,
+        code: mapped.code,
+        error: mapped.logMessage,
       },
     });
 
-    return NextResponse.json(
-      {
-        ok: false,
-        error: errorMessage,
-      },
-      { status: 500 },
-    );
+    return NextResponse.json(buildApiErrorBody(mapped), {
+      status: mapped.status,
+    });
   }
 }

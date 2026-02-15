@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import {
   buildAnnualAnalysisPayload,
-  parseAnalysisYear,
   parseAnnualAnalysisPayload,
 } from "@/lib/analysis/annualApi";
+import { buildApiErrorBody, mapToApiRouteError } from "@/lib/api/errors";
+import { parseAnalysisYearForApi } from "@/lib/api/validators";
 import { createClient } from "@/lib/supabase/server";
 import type { Transaction } from "@/types/budget";
 import type { MonthlyBudget } from "@/types/monthlyBudget";
@@ -96,11 +97,11 @@ async function loadRawAnalysisData(
   ]);
 
   if (transactionError) {
-    throw new Error(transactionError.message);
+    throw transactionError;
   }
 
   if (budgetError) {
-    throw new Error(budgetError.message);
+    throw budgetError;
   }
 
   const transactions = ((transactionRows ?? []) as TransactionRow[]).map(
@@ -120,16 +121,26 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser();
 
     if (userError) {
-      return NextResponse.json({ error: userError.message }, { status: 401 });
+      console.warn("[analysis/annual] auth.getUser failed", {
+        code: userError.code,
+        message: userError.message,
+      });
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized", code: "UNAUTHORIZED" },
+        { status: 401 },
+      );
     }
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized", code: "UNAUTHORIZED" },
+        { status: 401 },
+      );
     }
 
     const nowYear = new Date().getFullYear();
     const requestUrl = new URL(request.url);
-    const year = parseAnalysisYear(
+    const year = parseAnalysisYearForApi(
       requestUrl.searchParams.get("year"),
       nowYear,
     );
@@ -144,7 +155,7 @@ export async function GET(request: Request) {
     }
 
     if (!isMissingRpcError(rpcError as RpcErrorLike)) {
-      throw new Error(rpcError.message);
+      throw rpcError;
     }
 
     console.warn(
@@ -154,13 +165,16 @@ export async function GET(request: Request) {
     const payload = await loadRawAnalysisData(supabase, year);
     return NextResponse.json({ ok: true, source: "raw-fallback", ...payload });
   } catch (error) {
-    console.error("[analysis/annual] failed:", error);
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
+    const mapped = mapToApiRouteError(error);
+    console.error("[analysis/annual] failed", {
+      status: mapped.status,
+      code: mapped.code,
+      message: mapped.logMessage,
+      details: mapped.details ?? null,
+    });
+
+    return NextResponse.json(buildApiErrorBody(mapped), {
+      status: mapped.status,
+    });
   }
 }

@@ -153,3 +153,4 @@
 5. 린트/빌드/회귀 테스트 통과 + PASS 증빙 템플릿 첨부 후 배포.
 
 - 2026-02-15 note: Discord webhook configured; waiting for next scheduled vercel-cron auto-run verification.
+- 2026-02-15 note: Alerts are set and waiting for the next Vercel Cron automatic execution log.
