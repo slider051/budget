@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { sendOpsAlert } from "@/lib/alerts/opsAlert";
 import { getKstYearMonth } from "@/lib/time/kst";
 
 interface GenerationResultRow {
@@ -130,16 +131,32 @@ export async function GET(request: Request) {
 
     return NextResponse.json(responseBody);
   } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
     console.error("[cron/monthly-subscription] failed", {
       ...context,
       yearMonth,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: errorMessage,
       timestamp: new Date().toISOString(),
     });
+
+    await sendOpsAlert({
+      severity: "critical",
+      source: "cron/monthly-subscription",
+      message: "monthly subscription batch failed",
+      details: {
+        trigger: context.trigger,
+        requestId: context.requestId,
+        yearMonth,
+        error: errorMessage,
+      },
+    });
+
     return NextResponse.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: errorMessage,
       },
       { status: 500 },
     );

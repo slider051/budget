@@ -26,6 +26,7 @@ npm run lint      # ESLint 검사
 npm run lint:fix  # ESLint 자동 수정
 npm run test:kst  # KST 월 경계 단위 테스트
 npm run test:analysis # 연간 분석 집계 단위 테스트
+npm run test:ops-alert # 운영 알림 웹훅 단위 테스트
 ```
 
 ## 운영 보안 환경변수
@@ -35,6 +36,7 @@ npm run test:analysis # 연간 분석 집계 단위 테스트
 - `API_RATE_LIMIT_MAX` (선택, 기본 `60`): `/api/*` 윈도우당 허용 요청 수
 - `CRON_RATE_LIMIT_MAX` (선택, 기본 `10`): `/api/cron/*` 윈도우당 허용 요청 수
 - `SECURITY_LOG_BLOCKED_REQUESTS` (선택, 기본 `true`): 차단 요청(rate/suspicious path) 로그 출력 여부
+- `OPS_ALERT_WEBHOOK_URL` (선택): 운영 알림 웹훅 URL (예: Slack Incoming Webhook)
 - WAF 운영 가이드: `WAF_RUNBOOK.md`
 
 ## Supabase SQL 적용(분석 RPC 2차)

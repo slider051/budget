@@ -87,13 +87,14 @@
 7. [ ] 분석 집계 서버화
 - [x] 1차: `/api/analysis/annual` 서버 집계 API 전환(연간 KPI/월별/카테고리 합계)
 - [x] 2차 코드: RPC 함수/인덱스 SQL + API `rpc 우선 -> fallback` 경로 구현
-- [ ] 2차 운영: Supabase migration 적용 + RPC source 실운영 확인
+- [x] 2차 운영: Supabase migration 적용 + RPC source 실운영 확인
 
 8. [ ] 서버 입력 검증 통합
 - Zod 검증 + DB 제약 이중 방어.
 - 에러 메시지는 사용자용/로그용 분리 매핑.
 
 9. [ ] Slack 알림 연결
+- [x] 1차: Cron 실패 시 webhook 알림 전송(`OPS_ALERT_WEBHOOK_URL`)
 - 실패/지연/중복탐지 이벤트 알림.
 - severity 기준(critical/error/warn)과 라우팅 채널 정의.
 
@@ -114,11 +115,13 @@
   9. 분석 집계 2차 코드 완료(RPC SQL + fallback-safe API)
   10. WAF 운영 준비 완료(차단 로그 강화 + `WAF_RUNBOOK.md`)
   11. Cron API 구조 로그 강화(`trigger/requestId/start/completed/failed`)
+  12. 분석 집계 2차 운영 확인 완료(`source=rpc`)
+  13. Slack 알림 1차 연결(Cron 실패 -> webhook)
 - 다음 작업:
   1. `Vercel Cron -> API -> RPC` 연결
   2. Vercel Cron 자동 실행 로그 확인
-  3. Supabase SQL migration 적용 후 `/api/analysis/annual` `source=rpc` 확인
-  4. Vercel WAF 룰셋(대시보드) 실제 적용 및 24시간 튜닝
+  3. Vercel WAF 룰셋(대시보드) 실제 적용 및 24시간 튜닝
+  4. Slack 채널 severity/route 분기(critical/error/warn) 확장
 
 ## MVP 1.5 실행 플랜
 
