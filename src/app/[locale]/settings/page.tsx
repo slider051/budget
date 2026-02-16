@@ -4,39 +4,13 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
+import Section from "@/components/ui/Section";
 import { downloadBackup, importBackup } from "@/lib/backup/backupRepository";
 import { clearAllAlerts } from "@/lib/alerts/budgetAlerts";
 import { useTheme } from "@/hooks/useTheme";
 import type { ImportMode } from "@/types/backup";
 
 type Message = { type: "success" | "error"; text: string } | null;
-
-function Section({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Card>
-      <div className="p-6">
-        <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
-          {title}
-        </h2>
-        {description ? (
-          <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            {description}
-          </p>
-        ) : null}
-        {children}
-      </div>
-    </Card>
-  );
-}
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();

@@ -6,6 +6,9 @@ import { validateTransaction } from "@/lib/validation";
 import { getTodayString } from "@/lib/formatters";
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants";
 import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import Button from "@/components/ui/Button";
 import type { TransactionType } from "@/types/budget";
 
 export default function TransactionForm() {
@@ -52,6 +55,11 @@ export default function TransactionForm() {
     }
   };
 
+  const categoryOptions = [
+    { value: "", label: "선택하세요" },
+    ...categories.map((cat) => ({ value: cat, label: cat })),
+  ];
+
   return (
     <Card>
       <h3 className="mb-4 text-lg font-semibold text-gray-900">새 거래 추가</h3>
@@ -93,66 +101,44 @@ export default function TransactionForm() {
           </label>
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">금액</label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="10000"
-            required
-            min="1"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+        <Input
+          label="금액"
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="10000"
+          required
+          min="1"
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">카테고리</label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            required
-            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">선택하세요</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label="카테고리"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          required
+          options={categoryOptions}
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">설명</label>
-          <input
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="상세 내용 (선택사항)"
-            maxLength={200}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+        <Input
+          label="설명"
+          type="text"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="상세 내용 (선택사항)"
+          maxLength={200}
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">날짜</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+        <Input
+          label="날짜"
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          required
+        />
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-md bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
+        <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? "저장 중..." : "추가하기"}
-        </button>
+        </Button>
       </form>
     </Card>
   );
