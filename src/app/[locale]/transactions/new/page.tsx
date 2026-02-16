@@ -24,7 +24,7 @@ export default function NewTransactionPage() {
         }
       />
 
-      <div className="max-w-2xl">
+      <div className="section-stack-fixed">
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
           <div className="flex gap-3">
             <div className="flex-shrink-0">

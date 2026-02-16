@@ -44,7 +44,7 @@ export default function SubscriptionsPage() {
   });
 
   return (
-    <div className="space-y-5">
+    <div className="section-stack-wide space-y-5">
       <PageHeader title={t("title")} description={t("description")} />
 
       {loadError ? (
@@ -63,7 +63,8 @@ export default function SubscriptionsPage() {
               {formatMoney(summary[currency].monthly, currency)}
             </p>
             <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              {t("yearlyTotal")} {formatMoney(summary[currency].yearly, currency)}
+              {t("yearlyTotal")}{" "}
+              {formatMoney(summary[currency].yearly, currency)}
             </p>
           </Card>
         ))}

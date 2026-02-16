@@ -15,7 +15,7 @@ export default function NewFixedExpensePage() {
     <div>
       <PageHeader title={t("title")} description={t("description")} />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+      <div className="section-stack-wide grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         <div className="max-w-2xl">
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
             <div className="flex gap-3">

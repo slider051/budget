@@ -5,6 +5,7 @@ Canonical UI policy lives here:
 
 This guide covers:
 - card layout policy
+- fixed rail / fixed section width policy
 - dashboard layout blueprint
 - 200+ lines rewrite rule
 - implementation checklist

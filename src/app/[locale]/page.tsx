@@ -19,7 +19,7 @@ export default function Home() {
   const heroTitle = getDashboardHeroTitle(locale);
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="section-stack-wide space-y-4 lg:space-y-5">
       <section className="relative overflow-hidden rounded-[28px] border border-sky-200/80 bg-sky-100 shadow-sm lg:-ml-10 lg:w-[calc(100%+2.5rem)] xl:-ml-14 xl:w-[calc(100%+3.5rem)]">
         <Image
           src="/images/spot-dashboard.jpg"

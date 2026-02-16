@@ -73,7 +73,7 @@ function TransactionsContent() {
   );
 
   return (
-    <div>
+    <div className="section-stack-wide">
       <PageHeader
         title={t("title")}
         description={t("description")}
@@ -87,7 +87,7 @@ function TransactionsContent() {
       <div className="space-y-6">
         <TransactionFilterBar filters={filters} />
 
-        <div className="w-[550px]">
+        <div>
           <Card>
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-6">
@@ -126,7 +126,7 @@ function TransactionsFallback() {
   const t = useTranslations("transactions");
   const tc = useTranslations("common");
   return (
-    <div>
+    <div className="section-stack-wide">
       <PageHeader title={t("title")} description={t("description")} />
       <div className="text-center py-12 text-gray-500">{tc("loading")}</div>
     </div>

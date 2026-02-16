@@ -24,8 +24,14 @@ function Section({
   return (
     <Card>
       <div className="p-6">
-        <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-        {description ? <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">{description}</p> : null}
+        <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          {title}
+        </h2>
+        {description ? (
+          <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            {description}
+          </p>
+        ) : null}
         {children}
       </div>
     </Card>
@@ -66,7 +72,8 @@ export default function SettingsPage() {
     try {
       const text = await file.text();
       const result = await importBackup(text, importMode);
-      if (!result.success) return showMessage({ type: "error", text: result.message });
+      if (!result.success)
+        return showMessage({ type: "error", text: result.message });
       showMessage({
         type: "success",
         text: t("importSuccess", {
@@ -95,20 +102,35 @@ export default function SettingsPage() {
     { value: "dark" as const, label: "Dark", desc: t("themeDark") },
   ];
   const modeOptions = [
-    { value: "replace" as const, title: t("replaceMode"), desc: t("replaceModeDesc") },
-    { value: "merge" as const, title: t("mergeMode"), desc: t("mergeModeDesc") },
+    {
+      value: "replace" as const,
+      title: t("replaceMode"),
+      desc: t("replaceModeDesc"),
+    },
+    {
+      value: "merge" as const,
+      title: t("mergeMode"),
+      desc: t("mergeModeDesc"),
+    },
   ];
 
   return (
     <div>
       <PageHeader title={t("title")} description={t("description")} />
 
-      <div className="max-w-3xl space-y-6">
+      <div className="section-stack-fixed space-y-6">
         <Section title={t("theme")} description={t("themeDesc")}>
           <div className="space-y-2">
             {themeOptions.map((item) => (
               <label key={item.value} className="flex items-center">
-                <input type="radio" name="theme" value={item.value} checked={theme === item.value} onChange={() => setTheme(item.value)} className="mr-2" />
+                <input
+                  type="radio"
+                  name="theme"
+                  value={item.value}
+                  checked={theme === item.value}
+                  onChange={() => setTheme(item.value)}
+                  className="mr-2"
+                />
                 <span className="text-sm dark:text-gray-300">
                   <strong>{item.label}</strong> - {item.desc}
                 </span>
@@ -124,11 +146,20 @@ export default function SettingsPage() {
         <Section title={t("restore")} description={t("restoreDesc")}>
           <div className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">{t("importMode")}</label>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t("importMode")}
+              </label>
               <div className="space-y-2">
                 {modeOptions.map((item) => (
                   <label key={item.value} className="flex items-center">
-                    <input type="radio" name="importMode" value={item.value} checked={importMode === item.value} onChange={() => setImportMode(item.value)} className="mr-2" />
+                    <input
+                      type="radio"
+                      name="importMode"
+                      value={item.value}
+                      checked={importMode === item.value}
+                      onChange={() => setImportMode(item.value)}
+                      className="mr-2"
+                    />
                     <span className="text-sm dark:text-gray-300">
                       <strong>{item.title}</strong> - {item.desc}
                     </span>
@@ -143,14 +174,22 @@ export default function SettingsPage() {
               disabled={isImporting}
               className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
             />
-            {isImporting ? <p className="text-sm text-gray-500 dark:text-gray-400">{t("importing")}</p> : null}
+            {isImporting ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {t("importing")}
+              </p>
+            ) : null}
           </div>
         </Section>
 
         {message ? (
-          <div className={`rounded-lg border p-4 ${message.type === "success" ? "border-green-200 bg-green-50 text-green-900" : "border-red-200 bg-red-50 text-red-900"}`}>
+          <div
+            className={`rounded-lg border p-4 ${message.type === "success" ? "border-green-200 bg-green-50 text-green-900" : "border-red-200 bg-red-50 text-red-900"}`}
+          >
             <p className="text-sm font-medium">{message.text}</p>
-            {message.type === "error" ? <p className="mt-1 text-xs">{t("filePersistError")}</p> : null}
+            {message.type === "error" ? (
+              <p className="mt-1 text-xs">{t("filePersistError")}</p>
+            ) : null}
           </div>
         ) : null}
 

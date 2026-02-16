@@ -113,7 +113,7 @@ function BudgetContent() {
   const hasBudget = totalBudget > 0;
 
   return (
-    <div className="space-y-4">
+    <div className="section-stack-wide space-y-4">
       <PageHeader title={t("title")} description={t("description")} />
 
       <div className="flex flex-wrap items-center justify-between gap-2.5">
@@ -183,7 +183,7 @@ function BudgetFallback() {
   const t = useTranslations("budget");
   const tc = useTranslations("common");
   return (
-    <div>
+    <div className="section-stack-wide">
       <PageHeader title={t("title")} description={t("description")} />
       <div className="py-12 text-center text-gray-500">{tc("loading")}</div>
     </div>

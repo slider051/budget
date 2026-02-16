@@ -12,6 +12,9 @@
     --foreground: #171717;
     --card-glance-width: 240px;
     --card-glance-gap: 16px;
+    --page-rail-fixed-width: 1024px;
+    --section-fixed-width: 768px;
+    --section-wide-fixed-width: 1008px;
 }
 
 body {
@@ -45,4 +48,29 @@ body {
 .card-glance-item {
     width: 100%;
     min-height: 168px;
+}
+
+.page-rail-fixed {
+    width: var(--page-rail-fixed-width);
+    min-width: var(--page-rail-fixed-width);
+    margin-inline: auto;
+}
+
+.section-stack-fixed {
+    width: var(--section-fixed-width);
+    min-width: var(--section-fixed-width);
+}
+
+.section-stack-wide {
+    width: var(--section-wide-fixed-width);
+    min-width: var(--section-wide-fixed-width);
+}
+
+@media (max-width: 639px) {
+    .page-rail-fixed,
+    .section-stack-fixed,
+    .section-stack-wide {
+        width: 100%;
+        min-width: 100%;
+    }
 }

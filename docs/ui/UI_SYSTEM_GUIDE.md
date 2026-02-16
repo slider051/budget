@@ -1,68 +1,53 @@
 # UI System Guide
 
-Last updated: 2026-02-16
-Owner: Frontend (Dashboard/Budget UI)
+Last updated: 2026-02-16  
+Scope: Dashboard, Budget, Transactions, Subscriptions, Analysis, Settings
 
-## 1) 목적
-- 카드형 정보를 "스크롤 없이 한눈에" 파악할 수 있게 유지한다.
-- 창 너비 변화로 카드가 과도하게 늘어나거나 밀려나는 현상을 방지한다.
-- 대시보드/예산/거래 페이지의 시각 밀도를 일관된 기준으로 통제한다.
+## Goal
+- Keep card sections visually stable when the browser width changes.
+- Prevent "card blocks stretching and shrinking" across desktop pages.
+- Keep card density and spacing consistent across all page types.
 
-## 2) 핵심 정책
+## Fixed Width Policy
 
-### 2.1 카드 그리드 정책
-- 카드 그룹은 고정된 그리드 유틸을 사용한다.
-- 임의 `flex-wrap + width` 조합은 금지한다.
-- 반응형 열 수는 breakpoint에서만 바뀐다.
-  - mobile: 1열
-  - tablet: 2열
-  - desktop glance: 4열 (고정 트랙 폭)
+### 1) Fixed page rail
+- Main app content uses a fixed rail on desktop/tablet.
+- Class: `page-rail-fixed`
+- Token: `--page-rail-fixed-width: 1024px`
+- Behavior:
+  - `>= 640px`: fixed width rail (does not resize with viewport)
+  - `< 640px`: fallback to `width: 100%`
 
-### 2.2 카드 밀도 정책
-- 기본 카드 패딩: `p-3` ~ `p-4`
-- 제목: `text-sm` 또는 `text-base`
-- 본문: `text-xs` 또는 `text-sm`
-- 요약/퀵액션 카드는 세로 길이를 짧게 유지한다.
+### 2) Fixed section widths
+- Narrow card stacks: `section-stack-fixed`
+- Wide card stacks: `section-stack-wide`
+- Tokens:
+  - `--section-fixed-width: 768px`
+  - `--section-wide-fixed-width: 1008px`
+- Behavior:
+  - `>= 640px`: fixed width
+  - `< 640px`: fallback to `width: 100%`
 
-### 2.3 사이즈 토큰
-- Glance card width: `240px`
-- Glance card min-height: `168px`
-- Grid gap: `16px`
+### 3) Horizontal overflow handling
+- Main content area must allow horizontal scroll when fixed widths exceed viewport.
+- Use `overflow-x-auto` on the page main container.
+- This preserves fixed card sizes instead of shrinking cards.
 
-## 3) 대시보드 레이아웃 청사진 (v2)
+## Card Grid Policy
+- Keep glance cards on controlled tracks (`card-grid-glance-4`).
+- Avoid ad-hoc `flex-wrap + arbitrary width` combinations.
+- Use compact spacing by default:
+  - Card padding: `p-3` to `p-4`
+  - Title: `text-sm` to `text-base`
+  - Body: `text-xs` to `text-sm`
 
-### 3.1 정보 구조
-- 히어로 배경 영역에는 핵심 메시지 최소 정보만 배치한다.
-  - 월 배지
-  - 메인 타이틀
-  - 1줄 설명
-- 프리셋(학생/직장인) 같은 조작 영역은 히어로 밖의 별도 strip으로 분리한다.
-- 퀵액션 4카드는 히어로 하단 독립 영역에 배치한다.
+## Rewrite Rule (200+ lines)
+- If a UI file exceeds 200 lines, prefer rewrite over incremental patching.
+- Split orchestration and visual sections into smaller components.
+- Audit command: `npm run audit:ui-lines`
 
-### 3.2 사이드바 팝업 느낌
-- 대시보드 히어로만 페이지 단위로 좌측 확장(`negative margin`)을 허용한다.
-- 목적은 "사이드바가 위에 떠 있고, 배경 히어로가 뒤로 이어지는" 시각 효과다.
-- 다른 페이지에는 동일 기법을 기본 적용하지 않는다.
-
-### 3.3 금지사항
-- 히어로 안에 카드/프리셋/설명을 과다 배치하지 않는다.
-- 배경 이미지를 정보 컨테이너처럼 사용하지 않는다.
-
-## 4) 리라이트 정책 (200+ 라인 규칙)
-- UI 파일이 200줄을 넘으면 점진 패치보다 재작성 우선.
-- 재작성 시 페이지 오케스트레이션과 UI 블록을 분리한다.
-- 스크립트 기준: `npm run audit:ui-lines`
-
-## 5) 구현 체크리스트
-- 데스크탑 리사이즈 시 카드 폭이 안정적으로 유지되는가
-- 모바일/태블릿에서 1열/2열로 자연 전환되는가
-- 히어로 내부 정보량이 과밀하지 않은가
-- 프리셋/액션 영역이 역할별로 분리되어 있는가
-- lint/build/test가 모두 통과하는가
-
-## 6) 작업 순서 표준
-1. 설계 문서 갱신
-2. 테스트 추가(실패 확인)
-3. UI 재작성
-4. 테스트/린트/빌드 검증
-5. 결과 스냅샷 및 문서 링크 업데이트
+## Implementation Checklist
+- Browser resize does not resize desktop card sections.
+- Fixed rail and fixed section classes are applied consistently.
+- Small mobile screens still render with `width: 100%`.
+- `lint`, `build`, and UI-related tests pass.

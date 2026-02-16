@@ -94,7 +94,7 @@ function AnalysisContent() {
   };
 
   return (
-    <div>
+    <div className="section-stack-wide">
       <PageHeader title={t("title")} description={t("description")} />
 
       <div className="mb-6 flex items-center justify-between">
@@ -157,7 +157,7 @@ function AnalysisFallback() {
   const t = useTranslations("analysis");
   const tc = useTranslations("common");
   return (
-    <div>
+    <div className="section-stack-wide">
       <PageHeader title={t("title")} description={t("description")} />
       <div className="py-12 text-center text-gray-500">{tc("loading")}</div>
     </div>

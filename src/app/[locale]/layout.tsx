@@ -62,8 +62,8 @@ export default async function LocaleLayout({ children, params }: Props) {
             <BudgetProvider>
               <div className="flex min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
                 <Sidebar />
-                <main className="flex-1 min-w-0 px-6 py-6">
-                  <div className="mx-auto max-w-5xl">{children}</div>
+                <main className="flex-1 min-w-0 overflow-x-auto px-6 py-6">
+                  <div className="page-rail-fixed">{children}</div>
                 </main>
                 <AdRail />
               </div>
