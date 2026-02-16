@@ -84,14 +84,6 @@ export default function BudgetFilterControls({
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-3">
       <div className="flex flex-col gap-2.5 md:flex-row md:items-center">
-        <Input
-          type="text"
-          placeholder={t("searchCategory")}
-          value={filters.q}
-          onChange={(e) => updateFilter({ q: e.target.value })}
-          className="py-1.5 text-sm"
-        />
-
         <div className="w-full md:w-64">
           <Select
             value={sortPreset}

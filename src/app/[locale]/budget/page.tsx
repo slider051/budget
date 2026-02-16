@@ -116,13 +116,13 @@ function BudgetContent() {
     <div className="section-stack-wide space-y-4">
       <PageHeader title={t("title")} description={t("description")} />
 
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
+      <div className="flex flex-wrap items-center gap-3">
         <MonthPicker />
         <button
           onClick={() => setIsModalOpen(true)}
           className="rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-indigo-700 sm:text-sm"
         >
-          {t("addNew")}
+          {t("editBudget")}
         </button>
       </div>
 
