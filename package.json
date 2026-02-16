@@ -14,8 +14,8 @@
     "test:ops-alert": "node --test tests/ops-alert.test.ts",
     "test:api": "node --test tests/api-errors.test.ts tests/api-validation.test.ts",
     "test:security": "node --test tests/security-path-guard.test.ts",
-    "test:ui": "node --test tests/budget-ui.test.ts tests/dashboard-home-ui.test.ts",
-    "test:all": "node --test tests/analysis-api.test.ts tests/api-errors.test.ts tests/api-validation.test.ts tests/budget-ui.test.ts tests/dashboard-home-ui.test.ts tests/kst-year-month.test.ts tests/ops-alert.test.ts tests/security-path-guard.test.ts",
+    "test:ui": "node --test tests/budget-ui.test.ts tests/dashboard-home-ui.test.ts tests/ui-shell-route.test.ts",
+    "test:all": "node --test tests/analysis-api.test.ts tests/api-errors.test.ts tests/api-validation.test.ts tests/budget-ui.test.ts tests/dashboard-home-ui.test.ts tests/kst-year-month.test.ts tests/ops-alert.test.ts tests/security-path-guard.test.ts tests/ui-shell-route.test.ts",
     "gate:regression": "node scripts/regression-gate.mjs",
     "audit:ui-lines": "node scripts/ui-line-audit.mjs"
   },

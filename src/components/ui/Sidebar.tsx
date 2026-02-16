@@ -13,6 +13,10 @@ interface MenuItem {
   icon: string;
 }
 
+interface SidebarProps {
+  variant?: "default" | "floating";
+}
+
 const menuItems: readonly MenuItem[] = [
   { href: "/", labelKey: "dashboard", icon: "📊" },
   { href: "/budget", labelKey: "budget", icon: "💰" },
@@ -33,7 +37,7 @@ function stripLocalePrefix(pathname: string): string {
   return pathname;
 }
 
-export default function Sidebar() {
+export default function Sidebar({ variant = "default" }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
@@ -62,10 +66,18 @@ export default function Sidebar() {
     router.push(newPath);
   };
 
+  const isFloating = variant === "floating";
+
   return (
-    <aside className="flex w-64 min-h-screen flex-col border-r border-gray-200 bg-white px-6 py-8 dark:border-gray-700 dark:bg-gray-800">
+    <aside
+      className={
+        isFloating
+          ? "sticky top-6 z-20 flex w-56 shrink-0 flex-col rounded-2xl border border-white/70 bg-white/92 px-4 py-5 shadow-xl backdrop-blur dark:border-gray-700/70 dark:bg-gray-900/88"
+          : "flex w-64 min-h-screen flex-col border-r border-gray-200 bg-white px-6 py-8 dark:border-gray-700 dark:bg-gray-800"
+      }
+    >
       {/* Logo */}
-      <div className="mb-12">
+      <div className={isFloating ? "mb-7" : "mb-12"}>
         <Link href="/" className="flex items-center gap-3">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
             Q
@@ -77,7 +89,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="space-y-2">
+      <nav className={isFloating ? "space-y-1.5" : "space-y-2"}>
         {menuItems.map((item) => {
           const isActive = strippedPath === item.href;
           return (
@@ -97,7 +109,13 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto pt-6 space-y-2">
+      <div
+        className={
+          isFloating
+            ? "mt-5 space-y-2 border-t border-gray-200/80 pt-4 dark:border-gray-700/80"
+            : "mt-auto pt-6 space-y-2"
+        }
+      >
         <button
           type="button"
           onClick={handleSwitchLocale}

@@ -33,6 +33,13 @@ Scope: Dashboard, Budget, Transactions, Subscriptions, Analysis, Settings
 - Use `overflow-x-auto` on the page main container.
 - This preserves fixed card sizes instead of shrinking cards.
 
+## Hero-Header Policy (Dashboard Home)
+- Dashboard home uses a top hero-first structure:
+  - top: full-width hero image (`w-full`, `~40-50vh`)
+  - bottom: content area that includes sidebar + main cards
+- Sidebar must start below hero or slightly overlap hero bottom.
+- Do not use full-height left sidebar as the root app skeleton for dashboard home.
+
 ## Card Grid Policy
 - Keep glance cards on controlled tracks (`card-grid-glance-4`).
 - Avoid ad-hoc `flex-wrap + arbitrary width` combinations.

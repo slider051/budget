@@ -5,8 +5,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { BudgetProvider } from "@/context/BudgetContext";
 import { UIProvider } from "@/context/UIContext";
-import Sidebar from "@/components/ui/Sidebar";
-import AdRail from "@/components/ui/AdRail";
+import AppLayoutShell from "@/components/ui/AppLayoutShell";
 import { ThemeClassApplier } from "@/components/ThemeClassApplier";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -60,13 +59,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <ThemeClassApplier />
           <UIProvider>
             <BudgetProvider>
-              <div className="flex min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-                <Sidebar />
-                <main className="flex-1 min-w-0 overflow-x-auto px-6 py-6">
-                  <div className="page-rail-fixed">{children}</div>
-                </main>
-                <AdRail />
-              </div>
+              <AppLayoutShell>{children}</AppLayoutShell>
             </BudgetProvider>
           </UIProvider>
         </NextIntlClientProvider>
