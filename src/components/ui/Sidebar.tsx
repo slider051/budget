@@ -72,7 +72,7 @@ export default function Sidebar({ variant = "default" }: SidebarProps) {
     <aside
       className={
         isFloating
-          ? "sticky top-6 z-20 flex w-56 shrink-0 flex-col rounded-2xl border border-white/70 bg-white/92 px-4 py-5 shadow-xl backdrop-blur dark:border-gray-700/70 dark:bg-gray-900/88"
+          ? "sticky top-6 z-20 flex w-56 shrink-0 flex-col px-1 py-1"
           : "flex w-64 min-h-screen flex-col border-r border-gray-200 bg-white px-6 py-8 dark:border-gray-700 dark:bg-gray-800"
       }
     >
@@ -92,14 +92,19 @@ export default function Sidebar({ variant = "default" }: SidebarProps) {
       <nav className={isFloating ? "space-y-1.5" : "space-y-2"}>
         {menuItems.map((item) => {
           const isActive = strippedPath === item.href;
+          const floatingClass = isActive
+            ? "bg-white/88 text-indigo-600 shadow-sm dark:bg-gray-900/88 dark:text-indigo-300"
+            : "text-slate-700 hover:bg-white/80 dark:text-gray-300 dark:hover:bg-gray-900/75";
           return (
             <Link
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
-                isActive
-                  ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                isFloating
+                  ? floatingClass
+                  : isActive
+                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               }`}
             >
               <span className="text-xl">{item.icon}</span>
@@ -119,7 +124,11 @@ export default function Sidebar({ variant = "default" }: SidebarProps) {
         <button
           type="button"
           onClick={handleSwitchLocale}
-          className="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          className={`w-full rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
+            isFloating
+              ? "border-white/80 bg-white/85 text-slate-700 hover:bg-white dark:border-gray-700 dark:bg-gray-900/80 dark:text-gray-200 dark:hover:bg-gray-900"
+              : "border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          }`}
         >
           {tc("switchLang")}
         </button>
@@ -127,7 +136,11 @@ export default function Sidebar({ variant = "default" }: SidebarProps) {
           type="button"
           onClick={handleSignOut}
           disabled={isSigningOut}
-          className="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          className={`w-full rounded-xl border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+            isFloating
+              ? "border-white/80 bg-white/85 text-slate-700 hover:bg-white dark:border-gray-700 dark:bg-gray-900/80 dark:text-gray-200 dark:hover:bg-gray-900"
+              : "border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          }`}
         >
           {isSigningOut ? tc("loggingOut") : tc("logout")}
         </button>

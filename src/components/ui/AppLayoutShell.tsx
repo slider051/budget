@@ -3,8 +3,7 @@
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { useUI } from "@/hooks/useUI";
-import { getDashboardHeroTitle, getDashboardMonthBadge } from "@/lib/dashboard/homeUi";
+import { getDashboardHeroTitle } from "@/lib/dashboard/homeUi";
 import { isLocaleRootPath } from "@/lib/routing/shellRoute";
 import AdRail from "@/components/ui/AdRail";
 import Sidebar from "@/components/ui/Sidebar";
@@ -17,10 +16,8 @@ export default function AppLayoutShell({ children }: AppLayoutShellProps) {
   const pathname = usePathname();
   const locale = useLocale();
   const t = useTranslations("dashboard");
-  const { selectedMonth } = useUI();
 
   if (isLocaleRootPath(pathname)) {
-    const badgeText = getDashboardMonthBadge(locale, selectedMonth);
     const heroTitle = getDashboardHeroTitle(locale);
 
     return (
@@ -38,9 +35,6 @@ export default function AppLayoutShell({ children }: AppLayoutShellProps) {
 
           <div className="relative mx-auto flex h-full w-full max-w-[1280px] items-start px-6 pt-7 sm:px-8 lg:px-10">
             <div className="max-w-3xl space-y-4">
-              <div className="inline-flex w-fit rounded-md border border-white/80 bg-white/90 px-4 py-2 text-sm font-semibold tracking-tight text-slate-900 shadow-sm sm:text-base">
-                {badgeText}
-              </div>
               <div className="rounded-2xl border border-white/75 bg-white/72 p-5 shadow-sm backdrop-blur-sm sm:p-6">
                 <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
                   {heroTitle}
@@ -53,11 +47,13 @@ export default function AppLayoutShell({ children }: AppLayoutShellProps) {
           </div>
         </section>
 
-        <div className="relative -mt-16 px-4 pb-8 sm:px-6 lg:px-8">
-          <div className="mx-auto flex w-full max-w-[1280px] items-start gap-5">
+        <div className="relative px-4 pb-8 sm:px-6 lg:px-8">
+          <div className="mx-auto grid w-full max-w-[1280px] items-start gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
             <Sidebar variant="floating" />
-            <main className="min-w-0 flex-1 overflow-x-auto">
-              <div className="page-rail-fixed">{children}</div>
+            <main className="min-w-0 overflow-x-auto lg:-mt-10">
+              <div className="rounded-3xl border border-white/70 bg-white/90 p-4 shadow-xl backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/90 sm:p-5">
+                <div className="page-rail-fixed">{children}</div>
+              </div>
             </main>
           </div>
         </div>
