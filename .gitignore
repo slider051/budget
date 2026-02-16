@@ -39,4 +39,4 @@ yarn-error.log*
 next-env.d.ts
 
 # generated evidence reports
-/reports/pass-evidence/*.md
+/reports/

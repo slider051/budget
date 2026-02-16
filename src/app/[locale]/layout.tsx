@@ -6,7 +6,7 @@ import { routing } from "@/i18n/routing";
 import { BudgetProvider } from "@/context/BudgetContext";
 import { UIProvider } from "@/context/UIContext";
 import AppLayoutShell from "@/components/ui/AppLayoutShell";
-import { ThemeClassApplier } from "@/components/ThemeClassApplier";
+import { ThemeClassApplier } from "@/components/ui/ThemeClassApplier";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {

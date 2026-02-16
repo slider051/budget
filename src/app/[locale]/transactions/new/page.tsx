@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import TransactionForm from "@/components/budget/TransactionForm";
+import TransactionForm from "@/components/transactions/TransactionForm";
 import PageHeader from "@/components/ui/PageHeader";
 import { Link } from "@/i18n/navigation";
 import Button from "@/components/ui/Button";

@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useBudget } from "@/hooks/useBudget";
 import TransactionFilterBar from "@/components/transactions/TransactionFilterBar";
-import TransactionList from "@/components/budget/TransactionList";
+import TransactionList from "@/components/transactions/TransactionList";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { Link } from "@/i18n/navigation";
