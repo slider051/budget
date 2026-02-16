@@ -22,7 +22,7 @@ export default function AppLayoutShell({ children }: AppLayoutShellProps) {
 
     return (
       <div className="min-h-screen bg-slate-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-        <section className="relative h-[45vh] min-h-[320px] max-h-[540px] w-full overflow-hidden">
+        <section className="relative h-[46vh] min-h-[320px] max-h-[560px] w-full overflow-hidden">
           <Image
             src="/images/spot-dashboard.jpg"
             alt="Dashboard beach castle background"
@@ -33,7 +33,7 @@ export default function AppLayoutShell({ children }: AppLayoutShellProps) {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/10 to-white/45 dark:to-gray-950/70" />
 
-          <div className="relative mx-auto flex h-full w-full max-w-[1280px] items-start px-6 pt-7 sm:px-8 lg:px-10">
+          <div className="relative mx-auto flex h-full w-full max-w-[1400px] items-start px-6 pt-7 lg:px-8">
             <div className="max-w-3xl space-y-4">
               <div className="rounded-2xl border border-white/75 bg-white/72 p-5 shadow-sm backdrop-blur-sm sm:p-6">
                 <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
@@ -47,15 +47,13 @@ export default function AppLayoutShell({ children }: AppLayoutShellProps) {
           </div>
         </section>
 
-        <div className="relative px-4 pb-8 sm:px-6 lg:px-8">
-          <div className="mx-auto grid w-full max-w-[1280px] items-start gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="relative z-10 mx-auto flex w-full max-w-[1400px] flex-col gap-8 px-6 pb-8 -mt-16 lg:flex-row">
+          <div className="w-64 shrink-0">
             <Sidebar variant="floating" />
-            <main className="min-w-0 overflow-x-auto lg:-mt-10">
-              <div className="rounded-3xl border border-white/70 bg-white/90 p-4 shadow-xl backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/90 sm:p-5">
-                <div className="page-rail-fixed">{children}</div>
-              </div>
-            </main>
           </div>
+          <main className="min-w-0 flex-1 overflow-x-hidden lg:-mt-10">
+            {children}
+          </main>
         </div>
       </div>
     );

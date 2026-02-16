@@ -80,8 +80,7 @@ export default function PresetBanner({
       "mb-8 rounded-2xl border border-indigo-200 bg-indigo-50 p-5 dark:border-indigo-900/60 dark:bg-indigo-950/30",
     compact:
       "rounded-2xl border border-white/70 bg-white/85 p-4 backdrop-blur-sm shadow-sm",
-    strip:
-      "rounded-2xl border border-indigo-200/80 bg-white/95 p-3 shadow-sm sm:p-4",
+    strip: "p-0",
   };
 
   const sectionClass = sectionClassByVariant[variant];

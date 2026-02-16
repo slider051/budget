@@ -72,7 +72,7 @@ export default function Sidebar({ variant = "default" }: SidebarProps) {
     <aside
       className={
         isFloating
-          ? "sticky top-6 z-20 flex w-56 shrink-0 flex-col px-1 py-1"
+          ? "sticky top-5 z-20 flex w-64 shrink-0 flex-col rounded-2xl bg-white px-4 py-5 shadow-lg dark:bg-gray-900"
           : "flex w-64 min-h-screen flex-col border-r border-gray-200 bg-white px-6 py-8 dark:border-gray-700 dark:bg-gray-800"
       }
     >
@@ -93,8 +93,8 @@ export default function Sidebar({ variant = "default" }: SidebarProps) {
         {menuItems.map((item) => {
           const isActive = strippedPath === item.href;
           const floatingClass = isActive
-            ? "bg-white/88 text-indigo-600 shadow-sm dark:bg-gray-900/88 dark:text-indigo-300"
-            : "text-slate-700 hover:bg-white/80 dark:text-gray-300 dark:hover:bg-gray-900/75";
+            ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"
+            : "text-slate-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800";
           return (
             <Link
               key={item.href}
@@ -117,7 +117,7 @@ export default function Sidebar({ variant = "default" }: SidebarProps) {
       <div
         className={
           isFloating
-            ? "mt-5 space-y-2 border-t border-gray-200/80 pt-4 dark:border-gray-700/80"
+            ? "mt-5 space-y-2 border-t border-gray-200 pt-4 dark:border-gray-700"
             : "mt-auto pt-6 space-y-2"
         }
       >
@@ -126,7 +126,7 @@ export default function Sidebar({ variant = "default" }: SidebarProps) {
           onClick={handleSwitchLocale}
           className={`w-full rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
             isFloating
-              ? "border-white/80 bg-white/85 text-slate-700 hover:bg-white dark:border-gray-700 dark:bg-gray-900/80 dark:text-gray-200 dark:hover:bg-gray-900"
+              ? "border-gray-300 bg-white text-slate-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
               : "border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
           }`}
         >
@@ -138,7 +138,7 @@ export default function Sidebar({ variant = "default" }: SidebarProps) {
           disabled={isSigningOut}
           className={`w-full rounded-xl border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
             isFloating
-              ? "border-white/80 bg-white/85 text-slate-700 hover:bg-white dark:border-gray-700 dark:bg-gray-900/80 dark:text-gray-200 dark:hover:bg-gray-900"
+              ? "border-gray-300 bg-white text-slate-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
               : "border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
           }`}
         >

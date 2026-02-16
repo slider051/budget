@@ -5,15 +5,13 @@ import QuickActionTiles from "@/components/budget/QuickActionTiles";
 
 export default function Home() {
   return (
-    <div className="section-stack-wide space-y-4 pb-4">
+    <div className="w-full space-y-4 pb-4">
       <PresetBanner variant="strip" />
 
-      <section className="rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm sm:p-4">
-        <QuickActionTiles
-          className="gap-3"
-          cardClassName="border-slate-200 bg-white shadow-none hover:border-indigo-300 hover:shadow-sm"
-        />
-      </section>
+      <QuickActionTiles
+        className="gap-3"
+        cardClassName="border-slate-200 bg-white shadow-sm hover:border-indigo-300 hover:shadow-md"
+      />
     </div>
   );
 }
