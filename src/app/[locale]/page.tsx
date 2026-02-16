@@ -6,12 +6,12 @@ import QuickActionTiles from "@/components/budget/QuickActionTiles";
 export default function Home() {
   return (
     <div className="w-full space-y-4 pb-4">
-      <PresetBanner variant="strip" />
-
       <QuickActionTiles
         className="gap-3"
         cardClassName="border-slate-200 bg-white shadow-sm hover:border-indigo-300 hover:shadow-md"
       />
+
+      <PresetBanner variant="compact" />
     </div>
   );
 }
