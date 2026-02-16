@@ -53,7 +53,7 @@ export default function SubscriptionsPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid max-w-[80%] gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {(["KRW", "USD", "JPY"] as const).map((currency) => (
           <Card key={currency} className="p-4">
             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -69,23 +69,6 @@ export default function SubscriptionsPage() {
           </Card>
         ))}
       </div>
-
-      <Card className="p-4">
-        <SubscriptionForm
-          form={editor.form}
-          editingId={editor.editingId}
-          errorMessage={editor.errorMessage}
-          previewPaymentText={editor.previewPaymentText}
-          previewCycleLabel={editor.previewCycleLabel}
-          previewDateLabel={editor.previewDateLabel}
-          previewDate={editor.previewDate}
-          onSubmit={editor.handleSubmit}
-          onReset={editor.resetForm}
-          onPresetChange={editor.handlePresetChange}
-          setForm={editor.setForm}
-          isSubmitting={editor.isSubmitting}
-        />
-      </Card>
 
       <Card className="p-4">
         <div className="space-y-4">
@@ -131,6 +114,23 @@ export default function SubscriptionsPage() {
             </div>
           ) : null}
         </div>
+      </Card>
+
+      <Card className="p-4">
+        <SubscriptionForm
+          form={editor.form}
+          editingId={editor.editingId}
+          errorMessage={editor.errorMessage}
+          previewPaymentText={editor.previewPaymentText}
+          previewCycleLabel={editor.previewCycleLabel}
+          previewDateLabel={editor.previewDateLabel}
+          previewDate={editor.previewDate}
+          onSubmit={editor.handleSubmit}
+          onReset={editor.resetForm}
+          onPresetChange={editor.handlePresetChange}
+          setForm={editor.setForm}
+          isSubmitting={editor.isSubmitting}
+        />
       </Card>
     </div>
   );

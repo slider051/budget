@@ -22,7 +22,8 @@ export const DASHBOARD_PRESETS: Record<DashboardPresetId, DashboardPreset> = {
   student: {
     id: "student",
     label: "학생",
-    description: "용돈 30만원 기준의 기본 예산과 구독 샘플을 빠르게 등록합니다.",
+    description:
+      "용돈 30만원 기준의 기본 예산과 구독 샘플을 빠르게 등록합니다.",
     income: {
       type: "income",
       amount: 300000,
@@ -40,8 +41,9 @@ export const DASHBOARD_PRESETS: Record<DashboardPresetId, DashboardPreset> = {
   },
   worker: {
     id: "worker",
-    label: "직장인 (사회초년생)",
-    description: "월급 230만원 기준의 기본 예산과 구독 샘플을 빠르게 등록합니다.",
+    label: "사회초년생",
+    description:
+      "월급 230만원 기준의 기본 예산과 구독 샘플을 빠르게 등록합니다.",
     income: {
       type: "income",
       amount: 2300000,

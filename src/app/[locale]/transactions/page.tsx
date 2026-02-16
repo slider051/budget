@@ -85,9 +85,11 @@ function TransactionsContent() {
       />
 
       <div className="space-y-6">
-        <TransactionFilterBar filters={filters} />
+        <div className="max-w-[70%]">
+          <TransactionFilterBar filters={filters} />
+        </div>
 
-        <div>
+        <div className="max-w-[70%]">
           <Card>
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-6">
@@ -112,10 +114,10 @@ function TransactionsContent() {
               </div>
             </div>
           </Card>
+        </div>
 
-          <div className="mt-6">
-            <TransactionList transactions={filteredTransactions} />
-          </div>
+        <div className="max-w-[45%]">
+          <TransactionList transactions={filteredTransactions} />
         </div>
       </div>
     </div>

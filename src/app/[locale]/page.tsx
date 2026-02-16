@@ -11,7 +11,9 @@ export default function Home() {
         cardClassName="border-slate-200 bg-white shadow-sm hover:border-indigo-300 hover:shadow-md"
       />
 
-      <PresetBanner variant="compact" />
+      <div className="max-w-[50%]">
+        <PresetBanner variant="compact" />
+      </div>
     </div>
   );
 }

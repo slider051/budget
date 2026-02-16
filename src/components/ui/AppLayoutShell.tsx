@@ -26,11 +26,11 @@ export default function AppLayoutShell({ children }: AppLayoutShellProps) {
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/10 via-white/50 to-slate-50 dark:from-black/30 dark:via-gray-950/60 dark:to-gray-950" />
 
-        <div className="relative mx-auto flex w-full max-w-[1400px] flex-col gap-8 px-6 pt-6 pb-8 lg:flex-row">
-          <div className="w-64 shrink-0">
+        <div className="relative mx-auto flex w-full max-w-[1400px] flex-col gap-8 px-6 pb-8 lg:flex-row">
+          <div className="w-64 shrink-0 pt-[200px]">
             <Sidebar variant="floating" />
           </div>
-          <main className="min-w-0 flex-1 overflow-x-hidden pt-2">
+          <main className="min-w-0 flex-1 overflow-x-hidden pt-[400px]">
             {children}
           </main>
         </div>

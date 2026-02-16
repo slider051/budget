@@ -155,7 +155,7 @@ function BudgetContent() {
         </p>
       </div>
 
-      <section className="grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+      <section className="grid max-w-[90%] grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
         {filteredCategoryData.map((data) => (
           <BudgetCategoryCard
             key={data.category}
