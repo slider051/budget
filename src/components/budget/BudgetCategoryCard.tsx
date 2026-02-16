@@ -1,24 +1,48 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
-import CircularProgress from "./CircularProgress";
-import Badge from "@/components/ui/Badge";
-import Button from "@/components/ui/Button";
 import { formatCurrency } from "@/lib/formatters";
 import {
-  shouldShowBudgetAlert,
-  markAlertAsSeen,
-} from "@/lib/alerts/budgetAlerts";
+  getProgressWidthPercent,
+  getUsagePercent,
+  getUsageVisualState,
+} from "@/lib/budget/budgetUi";
 
 interface BudgetCategoryCardProps {
   category: string;
   spent: number;
   budget: number;
   icon?: string;
-  month: string;
-  koreanName: string;
   onEditBudget?: () => void;
+}
+
+function getToneClasses(state: ReturnType<typeof getUsageVisualState>) {
+  switch (state) {
+    case "over":
+      return {
+        badge: "bg-red-50 text-red-700",
+        bar: "bg-red-500",
+        value: "text-red-700",
+      };
+    case "warning":
+      return {
+        badge: "bg-amber-50 text-amber-700",
+        bar: "bg-amber-500",
+        value: "text-amber-700",
+      };
+    case "unset":
+      return {
+        badge: "bg-gray-100 text-gray-600",
+        bar: "bg-gray-300",
+        value: "text-gray-600",
+      };
+    default:
+      return {
+        badge: "bg-emerald-50 text-emerald-700",
+        bar: "bg-emerald-500",
+        value: "text-emerald-700",
+      };
+  }
 }
 
 export default function BudgetCategoryCard({
@@ -26,159 +50,95 @@ export default function BudgetCategoryCard({
   spent,
   budget,
   icon,
-  month,
-  koreanName,
   onEditBudget,
 }: BudgetCategoryCardProps) {
   const t = useTranslations("budget");
   const tc = useTranslations("common");
-  const percentage = budget > 0 ? (spent / budget) * 100 : 0;
+
+  const usagePct = getUsagePercent(spent, budget);
+  const usageState = getUsageVisualState(usagePct);
+  const usageWidth = getProgressWidthPercent(usagePct);
+  const tone = getToneClasses(usageState);
+
   const remaining = budget - spent;
-  const isOnTrack = percentage <= 80;
-  const needsAttention = percentage > 80;
+  const remainingLabel = remaining >= 0 ? tc("left") : tc("over");
+  const remainingAmount = Math.abs(remaining);
 
-  const [showAlert, setShowAlert] = useState(() =>
-    shouldShowBudgetAlert(spent, budget, month, koreanName),
-  );
-
-  const handleDismissAlert = () => {
-    markAlertAsSeen(month, koreanName);
-    setShowAlert(false);
-  };
+  const statusText =
+    usageState === "over"
+      ? tc("over")
+      : usageState === "warning"
+        ? tc("needAttention")
+        : usageState === "unset"
+          ? tc("notSet")
+          : tc("onTrack");
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow w-[420px] h-[280px] flex flex-col">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          {icon && <span className="text-2xl">{icon}</span>}
-          <h3 className="text-lg font-semibold text-gray-900">{category}</h3>
+    <article className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm transition-shadow hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          {icon ? <span className="text-base">{icon}</span> : null}
+          <h3 className="truncate text-sm font-semibold text-gray-900 sm:text-base">
+            {category}
+          </h3>
         </div>
-        <button className="text-gray-400 hover:text-gray-600">
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {onEditBudget ? (
+          <button
+            type="button"
+            onClick={onEditBudget}
+            className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            aria-label={t("editBudget")}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-            />
-          </svg>
-        </button>
-      </div>
-
-      <div className="flex items-center justify-between flex-1">
-        <div className="flex justify-center">
-          <CircularProgress percentage={percentage} size="md">
-            <div className="text-center">
-              <div className="break-all px-1 text-sm font-bold leading-tight text-gray-900">
-                {formatCurrency(spent)}
-              </div>
-              <div className="text-xs text-gray-500">
-                {remaining > 0 ? tc("left") : tc("over")}
-              </div>
-            </div>
-          </CircularProgress>
-        </div>
-
-        <div className="min-w-0 text-right">
-          <div className="mb-1 break-all text-xl font-bold leading-tight text-gray-900">
-            {formatCurrency(remaining)}
-          </div>
-          <div className="mb-3 break-all text-sm text-gray-500">
-            / {formatCurrency(budget)}
-          </div>
-          {isOnTrack && (
-            <Badge variant="success">
-              <span className="flex items-center gap-1">
-                <svg
-                  className="w-3 h-3"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {tc("onTrack")}
-              </span>
-            </Badge>
-          )}
-          {needsAttention && (
-            <Badge variant="warning">
-              <span className="flex items-center gap-1">
-                <svg
-                  className="w-3 h-3"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {tc("needAttention")}
-              </span>
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      {showAlert && (
-        <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-orange-900 mb-1">
-                {t("needsAttention")}
-              </p>
-              <p className="text-xs text-orange-700 mb-2">
-                {t("usedPercent", {
-                  category: koreanName,
-                  percent: percentage.toFixed(0),
-                })}
-              </p>
-              <div className="flex gap-2">
-                {onEditBudget && (
-                  <Button onClick={onEditBudget} size="sm" variant="secondary">
-                    {t("editBudget")}
-                  </Button>
-                )}
-                <Button
-                  onClick={handleDismissAlert}
-                  size="sm"
-                  variant="outline"
-                >
-                  {tc("confirm")}
-                </Button>
-              </div>
-            </div>
-            <button
-              onClick={handleDismissAlert}
-              className="text-orange-400 hover:text-orange-600"
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+              />
+            </svg>
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mt-2.5 flex items-center justify-between gap-2">
+        <p className="truncate text-xs text-gray-700 sm:text-sm">
+          {formatCurrency(spent)} {t("spent")} (
+          {formatCurrency(remainingAmount)} {remainingLabel})
+        </p>
+        <span
+          className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone.badge}`}
+        >
+          {statusText}
+        </span>
+      </div>
+
+      <div className="mt-2.5">
+        <div className="mb-1 flex items-center justify-between text-[11px] text-gray-500 sm:text-xs">
+          <span>{t("monthlyBudget")}</span>
+          <span>
+            {usagePct === null ? tc("notSet") : `${usagePct.toFixed(0)}%`}
+          </span>
         </div>
-      )}
-    </div>
+        <div className="h-1.5 w-full rounded-full bg-gray-100">
+          <div
+            className={`h-full rounded-full transition-all duration-300 ${tone.bar}`}
+            style={{ width: `${usageWidth}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-2.5 flex items-center justify-between text-[11px] sm:text-xs">
+        <span className="text-gray-500">{formatCurrency(budget)}</span>
+        <span className={`font-semibold ${tone.value}`}>
+          {formatCurrency(remainingAmount)} {remainingLabel}
+        </span>
+      </div>
+    </article>
   );
 }

@@ -53,6 +53,13 @@ function BudgetEditModalContent({
   };
 
   const handleApplyYear = async () => {
+    const confirmed = window.confirm(
+      `${templateYear}년 1~12월 예산을 현재 값으로 덮어씁니다. 계속할까요?`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
     setIsSaving(true);
     try {
       const categoriesInWon: Record<string, number> = {};
@@ -81,12 +88,18 @@ function BudgetEditModalContent({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
-        <div className="sticky top-0 rounded-t-2xl border-b border-gray-200 bg-white px-6 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent p-4 backdrop-blur-[1px]">
+      <div className="isolate max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-xl">
+        <div className="sticky top-0 z-30 rounded-t-2xl border-b border-gray-200 bg-white px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-gray-900">{month} 예산 설정</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <h2 className="text-2xl font-semibold text-gray-900">
+              {month} 예산 설정
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+              aria-label="Close modal"
+            >
               <svg
                 className="h-6 w-6"
                 fill="none"
@@ -107,16 +120,21 @@ function BudgetEditModalContent({
         <div className="space-y-6 px-6 py-6">
           <div>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">카테고리별 예산</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                카테고리별 예산
+              </h3>
               <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-600">
                 단위: 만원
               </span>
             </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {EXPENSE_CATEGORIES.map((category) => (
-                <div key={category} className="relative">
+                <div
+                  key={category}
+                  className="mx-auto w-full max-w-[9rem] min-w-0"
+                >
                   <Input
-                    label={`${category} (만원)`}
+                    label={category}
                     type="number"
                     min="0"
                     value={categories[category] || 0}
@@ -124,16 +142,17 @@ function BudgetEditModalContent({
                       handleCategoryChange(category, e.target.value)
                     }
                     placeholder="0"
+                    className="px-2 py-1.5 text-right"
                   />
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-6">
+          <div className="rounded-2xl border border-slate-300 bg-slate-50/70 p-4">
             <button
               onClick={() => setShowYearTemplate(!showYearTemplate)}
-              className="flex items-center gap-2 font-medium text-indigo-600 hover:text-indigo-700"
+              className="flex items-center gap-2 font-medium text-slate-700 hover:text-slate-900"
             >
               <svg
                 className="h-5 w-5"
@@ -152,20 +171,28 @@ function BudgetEditModalContent({
             </button>
 
             {showYearTemplate && (
-              <div className="mt-4 rounded-xl bg-indigo-50 p-4">
-                <p className="mb-3 text-sm text-indigo-900">
+              <div className="mt-4 rounded-xl border border-amber-200 bg-white p-4">
+                <p className="mb-3 text-sm text-amber-900">
                   현재 금액을 선택한 연도의 1~12월에 모두 적용합니다.
                 </p>
-                <div className="flex items-end gap-3">
+                <div className="flex flex-wrap items-end gap-3">
                   <Input
                     label="연도"
                     type="number"
                     min="2020"
                     max="2030"
+                    className="w-28"
                     value={templateYear}
-                    onChange={(e) => setTemplateYear(parseInt(e.target.value, 10))}
+                    onChange={(e) =>
+                      setTemplateYear(parseInt(e.target.value, 10))
+                    }
                   />
-                  <Button onClick={handleApplyYear} className="mb-0" disabled={isSaving}>
+                  <Button
+                    variant="outline"
+                    onClick={handleApplyYear}
+                    className="mb-0 border-orange-300 text-orange-700 hover:bg-orange-50"
+                    disabled={isSaving}
+                  >
                     {templateYear}년 전체 적용
                   </Button>
                 </div>
@@ -174,8 +201,13 @@ function BudgetEditModalContent({
           </div>
         </div>
 
-        <div className="sticky bottom-0 flex gap-3 rounded-b-2xl border-t border-gray-200 bg-white px-6 py-4">
-          <Button variant="outline" onClick={onClose} className="flex-1" disabled={isSaving}>
+        <div className="sticky bottom-0 z-30 flex gap-3 rounded-b-2xl border-t border-gray-200 bg-white px-6 py-4 shadow-[0_-6px_16px_rgba(15,23,42,0.06)]">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="flex-1"
+            disabled={isSaving}
+          >
             취소
           </Button>
           <Button onClick={handleSave} className="flex-1" disabled={isSaving}>

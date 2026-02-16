@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
@@ -16,6 +17,9 @@ export default function BudgetFilterControls({
 }: BudgetFilterControlsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations("budgetFilter");
+  const tb = useTranslations("budget");
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   const updateFilter = useCallback(
     (updates: Partial<BudgetFilterState>) => {
@@ -45,76 +49,139 @@ export default function BudgetFilterControls({
     filters.dir !== "desc" ||
     filters.minUsage;
 
+  const sortPreset = `${filters.sort}:${filters.dir}`;
+
+  const sortOptions = useMemo(
+    () => [
+      {
+        value: "usagePct:desc",
+        label: `${t("usageRate")} (${t("highFirst")})`,
+      },
+      {
+        value: "usagePct:asc",
+        label: `${t("usageRate")} (${t("lowFirst")})`,
+      },
+      {
+        value: "spent:desc",
+        label: `${t("spentAmount")} (${t("highFirst")})`,
+      },
+      {
+        value: "spent:asc",
+        label: `${t("spentAmount")} (${t("lowFirst")})`,
+      },
+      {
+        value: "remaining:desc",
+        label: `${t("remaining")} (${t("highFirst")})`,
+      },
+      {
+        value: "remaining:asc",
+        label: `${t("remaining")} (${t("lowFirst")})`,
+      },
+    ],
+    [t],
+  );
+
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <section className="rounded-xl border border-gray-200 bg-white p-3">
+      <div className="flex flex-col gap-2.5 md:flex-row md:items-center">
         <Input
           type="text"
-          placeholder="카테고리 검색"
+          placeholder={t("searchCategory")}
           value={filters.q}
           onChange={(e) => updateFilter({ q: e.target.value })}
+          className="py-1.5 text-sm"
         />
 
-        <Select
-          value={filters.status}
-          onChange={(e) =>
-            updateFilter({
-              status: e.target.value as BudgetFilterState["status"],
-            })
-          }
-          options={[
-            { value: "all", label: "전체 상태" },
-            { value: "ok", label: "정상 (<90%)" },
-            { value: "warning", label: "주의 (90-99%)" },
-            { value: "over", label: "초과 (≥100%)" },
-            { value: "unset", label: "미설정" },
-          ]}
-        />
+        <div className="w-full md:w-64">
+          <Select
+            value={sortPreset}
+            onChange={(e) => {
+              const [sort, dir] = e.target.value.split(":");
+              updateFilter({
+                sort: sort as BudgetFilterState["sort"],
+                dir: dir as BudgetFilterState["dir"],
+              });
+            }}
+            options={sortOptions}
+            className="py-1.5 text-sm"
+          />
+        </div>
 
-        <Select
-          value={filters.sort}
-          onChange={(e) =>
-            updateFilter({
-              sort: e.target.value as BudgetFilterState["sort"],
-            })
-          }
-          options={[
-            { value: "usagePct", label: "사용률" },
-            { value: "spent", label: "지출액" },
-            { value: "remaining", label: "남은 금액" },
-          ]}
-        />
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setShowMoreFilters((prev) => !prev)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:bg-gray-50"
+            aria-label="More filters"
+            aria-expanded={showMoreFilters}
+          >
+            <svg
+              className="h-4.5 w-4.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 4h18M6 12h12M10 20h4"
+              />
+            </svg>
+          </button>
 
-        <Select
-          value={filters.dir}
-          onChange={(e) =>
-            updateFilter({
-              dir: e.target.value as BudgetFilterState["dir"],
-            })
-          }
-          options={[
-            { value: "desc", label: "높은순" },
-            { value: "asc", label: "낮은순" },
-          ]}
-        />
-
-        <Input
-          type="number"
-          placeholder="최소 사용률 (%)"
-          min="0"
-          max="100"
-          value={filters.minUsage}
-          onChange={(e) => updateFilter({ minUsage: e.target.value })}
-        />
+          {hasActiveFilters ? (
+            <Button onClick={handleReset} variant="outline" size="sm">
+              {tb("resetFilters")}
+            </Button>
+          ) : null}
+        </div>
       </div>
 
-      {hasActiveFilters && (
-        <div className="mt-3">
-          <Button onClick={handleReset} variant="outline" size="sm">
-            Reset Filters
-          </Button>
+      {showMoreFilters ? (
+        <div className="mt-2.5 grid grid-cols-1 gap-2.5 border-t border-gray-200 pt-2.5 md:grid-cols-3">
+          <Select
+            value={filters.status}
+            onChange={(e) =>
+              updateFilter({
+                status: e.target.value as BudgetFilterState["status"],
+              })
+            }
+            options={[
+              { value: "all", label: t("allStatus") },
+              { value: "ok", label: t("ok") },
+              { value: "warning", label: t("warning") },
+              { value: "over", label: t("over") },
+              { value: "unset", label: t("unset") },
+            ]}
+            className="py-1.5 text-sm"
+          />
+
+          <Select
+            value={filters.dir}
+            onChange={(e) =>
+              updateFilter({
+                dir: e.target.value as BudgetFilterState["dir"],
+              })
+            }
+            options={[
+              { value: "desc", label: t("highFirst") },
+              { value: "asc", label: t("lowFirst") },
+            ]}
+            className="py-1.5 text-sm"
+          />
+
+          <Input
+            type="number"
+            placeholder={t("minUsage")}
+            min="0"
+            max="100"
+            value={filters.minUsage}
+            onChange={(e) => updateFilter({ minUsage: e.target.value })}
+            className="py-1.5 text-sm"
+          />
         </div>
-      )}
-    </div>
+      ) : null}
+    </section>
   );
 }
