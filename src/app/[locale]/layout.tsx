@@ -6,6 +6,7 @@ import { routing } from "@/i18n/routing";
 import { BudgetProvider } from "@/context/BudgetContext";
 import { UIProvider } from "@/context/UIContext";
 import Sidebar from "@/components/ui/Sidebar";
+import AdRail from "@/components/ui/AdRail";
 import { ThemeClassApplier } from "@/components/ThemeClassApplier";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -64,15 +65,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <main className="flex-1 min-w-0 px-6 py-6">
                   <div className="mx-auto max-w-5xl">{children}</div>
                 </main>
-                <aside className="hidden xl:block w-[300px] shrink-0 border-l border-gray-200 dark:border-gray-700 px-4 py-6">
-                  <div className="sticky top-6">
-                    <div className="h-[600px] rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                      <span className="text-sm text-gray-400 dark:text-gray-500">
-                        Ad Space
-                      </span>
-                    </div>
-                  </div>
-                </aside>
+                <AdRail />
               </div>
             </BudgetProvider>
           </UIProvider>

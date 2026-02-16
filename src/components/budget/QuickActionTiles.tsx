@@ -11,6 +11,11 @@ interface QuickAction {
   color: string;
 }
 
+interface QuickActionTilesProps {
+  className?: string;
+  cardClassName?: string;
+}
+
 const actions: readonly QuickAction[] = [
   {
     titleKey: "budgetStatus",
@@ -42,16 +47,19 @@ const actions: readonly QuickAction[] = [
   },
 ];
 
-export default function QuickActionTiles() {
+export default function QuickActionTiles({
+  className = "",
+  cardClassName = "",
+}: QuickActionTilesProps) {
   const t = useTranslations("quickActions");
 
   return (
-    <div className="card-grid-glance-4">
+    <div className={`card-grid-glance-4 ${className}`.trim()}>
       {actions.map((action) => (
         <Link
           key={action.href}
           href={action.href}
-          className="card-glance-item rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-indigo-300 hover:shadow-md group"
+          className={`card-glance-item group rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-indigo-300 hover:shadow-md ${cardClassName}`.trim()}
         >
           <div
             className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl text-xl ${action.color} transition-transform group-hover:scale-110`}
@@ -61,7 +69,9 @@ export default function QuickActionTiles() {
           <h3 className="mb-1.5 text-base font-semibold text-gray-900">
             {t(action.titleKey)}
           </h3>
-          <p className="text-sm leading-5 text-gray-500">{t(action.descKey)}</p>
+          <p className="overflow-hidden text-sm leading-5 text-gray-500 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:1]">
+            {t(action.descKey)}
+          </p>
         </Link>
       ))}
     </div>
