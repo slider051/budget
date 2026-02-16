@@ -13,7 +13,7 @@ import {
 } from "@/lib/presets/dashboardPresets";
 
 interface PresetBannerProps {
-  compact?: boolean;
+  variant?: "default" | "compact" | "strip";
   className?: string;
 }
 
@@ -30,7 +30,7 @@ function getStoredPreset(): DashboardPresetId | null {
 }
 
 export default function PresetBanner({
-  compact = false,
+  variant = "default",
   className = "",
 }: PresetBannerProps) {
   const t = useTranslations("dashboard");
@@ -69,43 +69,59 @@ export default function PresetBanner({
     }
   };
 
-  const sectionClass = compact
-    ? "rounded-2xl border border-white/70 bg-white/85 p-4 backdrop-blur-sm shadow-sm"
-    : "mb-8 rounded-2xl border border-indigo-200 bg-indigo-50 p-5 dark:border-indigo-900/60 dark:bg-indigo-950/30";
+  const isCompact = variant !== "default";
+  const isStrip = variant === "strip";
 
-  const labelClass = compact
+  const sectionClassByVariant: Record<
+    NonNullable<PresetBannerProps["variant"]>,
+    string
+  > = {
+    default:
+      "mb-8 rounded-2xl border border-indigo-200 bg-indigo-50 p-5 dark:border-indigo-900/60 dark:bg-indigo-950/30",
+    compact:
+      "rounded-2xl border border-white/70 bg-white/85 p-4 backdrop-blur-sm shadow-sm",
+    strip:
+      "rounded-2xl border border-indigo-200/80 bg-white/95 p-3 shadow-sm sm:p-4",
+  };
+
+  const sectionClass = sectionClassByVariant[variant];
+  const containerClass = isStrip
+    ? "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+    : isCompact
+      ? "space-y-3"
+      : "flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between";
+
+  const labelClass = isCompact
     ? "text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700"
     : "text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300";
 
-  const titleClass = compact
+  const titleClass = isStrip
     ? "mt-1 text-base font-semibold leading-tight text-slate-900"
-    : "mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100";
+    : isCompact
+      ? "mt-1 text-base font-semibold leading-tight text-slate-900"
+      : "mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100";
 
-  const descriptionClass = compact
-    ? "mt-1 text-xs leading-5 text-slate-600"
-    : "mt-1 text-sm text-gray-600 dark:text-gray-300";
+  const descriptionClass = isStrip
+    ? "mt-1 text-xs text-slate-600 sm:hidden"
+    : isCompact
+      ? "mt-1 text-xs leading-5 text-slate-600"
+      : "mt-1 text-sm text-gray-600 dark:text-gray-300";
 
-  const appliedClass = compact
-    ? "mt-2 text-xs text-indigo-700"
+  const appliedClass = isCompact
+    ? "mt-1 text-xs text-indigo-700"
     : "mt-2 text-xs text-indigo-700 dark:text-indigo-300";
 
-  const successClass = compact
+  const successClass = isCompact
     ? "mt-1 text-xs text-emerald-700"
     : "mt-1 text-xs text-emerald-700 dark:text-emerald-300";
 
-  const errorClass = compact
+  const errorClass = isCompact
     ? "mt-1 text-xs text-rose-700"
     : "mt-1 text-xs text-rose-700 dark:text-rose-300";
 
   return (
     <section className={`${sectionClass} ${className}`.trim()}>
-      <div
-        className={
-          compact
-            ? "space-y-3"
-            : "flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
-        }
-      >
+      <div className={containerClass}>
         <div>
           <p className={labelClass}>{t("presetQuickSetup")}</p>
           <h2 className={titleClass}>{t("presetTitle")}</h2>
@@ -116,7 +132,9 @@ export default function PresetBanner({
             </p>
           )}
           {feedback.text && (
-            <p className={feedback.tone === "error" ? errorClass : successClass}>
+            <p
+              className={feedback.tone === "error" ? errorClass : successClass}
+            >
               {feedback.text}
             </p>
           )}
@@ -130,7 +148,13 @@ export default function PresetBanner({
               variant={lastAppliedPreset === preset.id ? "primary" : "outline"}
               onClick={() => handleApplyPreset(preset.id)}
               disabled={isApplying}
-              className={compact ? "h-9 px-3 text-sm" : "whitespace-nowrap"}
+              className={
+                isStrip
+                  ? "h-9 px-3 text-sm"
+                  : isCompact
+                    ? "h-9 px-3 text-sm"
+                    : "whitespace-nowrap"
+              }
             >
               {preset.label}
             </Button>

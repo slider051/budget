@@ -116,5 +116,5 @@ npm run gate:regression
 
 ## UI Docs
 
-- UI card/layout policy: `docs/ui/UI_CARD_POLICY.md`
-- UI rewrite plan: `docs/ui/UI_REWRITE_PLAN.md`
+- UI system guide (policy + rewrite + dashboard blueprint): `docs/ui/UI_SYSTEM_GUIDE.md`
+- UI docs index: `docs/ui/README.md`
