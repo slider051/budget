@@ -42,9 +42,12 @@ function getMonthThemeBadge(locale: string, selectedMonth: string) {
   const index = Math.max(0, Math.min(11, (month || 1) - 1));
   const language = locale === "ko" ? "ko" : "en";
   const monthDate = new Date(year || new Date().getFullYear(), index, 1);
-  const monthLabel = new Intl.DateTimeFormat(language === "ko" ? "ko-KR" : "en-US", {
-    month: "long",
-  }).format(monthDate);
+  const monthLabel = new Intl.DateTimeFormat(
+    language === "ko" ? "ko-KR" : "en-US",
+    {
+      month: "long",
+    },
+  ).format(monthDate);
   const theme = MONTHLY_THEME_LABELS[language][index];
 
   return language === "ko"
@@ -57,9 +60,11 @@ export default function Home() {
   const locale = useLocale();
   const { selectedMonth } = useUI();
   const badgeText = getMonthThemeBadge(locale, selectedMonth);
+  const heroTitle =
+    locale === "ko" ? "예산을 쉽게 관리해보세요" : t("heroTitle");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <section className="relative overflow-hidden rounded-3xl border border-sky-200/70 bg-sky-100 shadow-sm">
         <Image
           src="/images/spot-dashboard.jpg"
@@ -69,32 +74,36 @@ export default function Home() {
           sizes="(max-width: 1280px) 100vw, 1200px"
           className="object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-white/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/12 via-transparent to-white/82" />
 
-        <div className="relative z-10 flex min-h-[460px] flex-col p-4 sm:p-6 lg:p-8">
-          <div className="inline-flex w-fit rounded-md border border-gray-400 bg-white/90 px-4 py-2 text-sm font-bold tracking-tight text-gray-900 shadow-sm sm:px-6 sm:text-xl">
-            {badgeText}
+        <div className="relative z-10 p-4 sm:p-6 lg:p-7">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="inline-flex w-fit rounded-md border border-slate-300/90 bg-white/90 px-4 py-2 text-sm font-semibold tracking-tight text-slate-900 shadow-sm sm:text-lg">
+                {badgeText}
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-white/75 bg-white/76 p-5 backdrop-blur-sm sm:p-6">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                  {heroTitle}
+                </h1>
+                <p className="mt-2 text-sm leading-6 text-slate-700 sm:text-base">
+                  {t("heroDescription")}
+                </p>
+              </div>
+            </div>
+
+            <PresetBanner compact className="w-full max-w-md lg:mt-1" />
           </div>
 
-          <div className="mt-6 max-w-2xl rounded-2xl border border-white/70 bg-white/75 p-5 backdrop-blur-sm sm:p-6">
-            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-              {t("heroTitle")}
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-gray-700 sm:text-base">
-              {t("heroDescription")}
-            </p>
-          </div>
-
-          <div className="mt-auto pt-6">
+          <div className="mt-5">
             <QuickActionTiles
               className="gap-3"
-              cardClassName="border-white/70 bg-white/88 backdrop-blur-sm hover:border-indigo-300"
+              cardClassName="border-white/70 bg-white/90 backdrop-blur-sm hover:border-indigo-300"
             />
           </div>
         </div>
       </section>
-
-      <PresetBanner />
     </div>
   );
 }

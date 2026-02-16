@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import Button from "@/components/ui/Button";
 import { useBudget } from "@/hooks/useBudget";
 import { applyDashboardPreset } from "@/lib/presets/applyDashboardPreset";
@@ -11,6 +12,16 @@ import {
   type DashboardPresetId,
 } from "@/lib/presets/dashboardPresets";
 
+interface PresetBannerProps {
+  compact?: boolean;
+  className?: string;
+}
+
+type FeedbackState = {
+  text: string;
+  tone: "success" | "error" | null;
+};
+
 function getStoredPreset(): DashboardPresetId | null {
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem(DASHBOARD_PRESET_STORAGE_KEY);
@@ -18,12 +29,19 @@ function getStoredPreset(): DashboardPresetId | null {
   return null;
 }
 
-export default function PresetBanner() {
+export default function PresetBanner({
+  compact = false,
+  className = "",
+}: PresetBannerProps) {
+  const t = useTranslations("dashboard");
   const { state, replaceTransactions } = useBudget();
   const [lastAppliedPreset, setLastAppliedPreset] =
     useState<DashboardPresetId | null>(() => getStoredPreset());
-  const [message, setMessage] = useState<string>("");
   const [isApplying, setIsApplying] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState>({
+    text: "",
+    tone: null,
+  });
 
   const presetItems = useMemo(
     () => DASHBOARD_PRESET_ORDER.map((id) => DASHBOARD_PRESETS[id]),
@@ -36,36 +54,70 @@ export default function PresetBanner() {
       const result = await applyDashboardPreset(presetId, state.transactions);
       await replaceTransactions(result.transactions);
       setLastAppliedPreset(presetId);
-      setMessage(`${result.presetLabel} 프리셋을 적용했습니다.`);
+      setFeedback({
+        text: t("presetApplySuccess", { label: result.presetLabel }),
+        tone: "success",
+      });
     } catch (error) {
       console.error(error);
-      setMessage("프리셋 적용 중 오류가 발생했습니다.");
+      setFeedback({
+        text: t("presetApplyError"),
+        tone: "error",
+      });
     } finally {
       setIsApplying(false);
     }
   };
 
+  const sectionClass = compact
+    ? "rounded-2xl border border-white/70 bg-white/85 p-4 backdrop-blur-sm shadow-sm"
+    : "mb-8 rounded-2xl border border-indigo-200 bg-indigo-50 p-5 dark:border-indigo-900/60 dark:bg-indigo-950/30";
+
+  const labelClass = compact
+    ? "text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700"
+    : "text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300";
+
+  const titleClass = compact
+    ? "mt-1 text-base font-semibold leading-tight text-slate-900"
+    : "mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100";
+
+  const descriptionClass = compact
+    ? "mt-1 text-xs leading-5 text-slate-600"
+    : "mt-1 text-sm text-gray-600 dark:text-gray-300";
+
+  const appliedClass = compact
+    ? "mt-2 text-xs text-indigo-700"
+    : "mt-2 text-xs text-indigo-700 dark:text-indigo-300";
+
+  const successClass = compact
+    ? "mt-1 text-xs text-emerald-700"
+    : "mt-1 text-xs text-emerald-700 dark:text-emerald-300";
+
+  const errorClass = compact
+    ? "mt-1 text-xs text-rose-700"
+    : "mt-1 text-xs text-rose-700 dark:text-rose-300";
+
   return (
-    <div className="mb-8 rounded-2xl border border-indigo-200 bg-indigo-50 p-5 dark:border-indigo-900/60 dark:bg-indigo-950/30">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <section className={`${sectionClass} ${className}`.trim()}>
+      <div
+        className={
+          compact
+            ? "space-y-3"
+            : "flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+        }
+      >
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
-            프리셋 빠른 설정
-          </p>
-          <h2 className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-            직업만 고르면 기본 예산/거래를 바로 적용합니다
-          </h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-            학생/직장인 프리셋을 즉시 적용합니다.
-          </p>
+          <p className={labelClass}>{t("presetQuickSetup")}</p>
+          <h2 className={titleClass}>{t("presetTitle")}</h2>
+          <p className={descriptionClass}>{t("presetDescription")}</p>
           {lastAppliedPreset && (
-            <p className="mt-2 text-xs text-indigo-700 dark:text-indigo-300">
-              최근 적용: {DASHBOARD_PRESETS[lastAppliedPreset].label}
+            <p className={appliedClass}>
+              {t("presetApplied")} {DASHBOARD_PRESETS[lastAppliedPreset].label}
             </p>
           )}
-          {message && (
-            <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
-              {message}
+          {feedback.text && (
+            <p className={feedback.tone === "error" ? errorClass : successClass}>
+              {feedback.text}
             </p>
           )}
         </div>
@@ -78,13 +130,13 @@ export default function PresetBanner() {
               variant={lastAppliedPreset === preset.id ? "primary" : "outline"}
               onClick={() => handleApplyPreset(preset.id)}
               disabled={isApplying}
-              className="whitespace-nowrap"
+              className={compact ? "h-9 px-3 text-sm" : "whitespace-nowrap"}
             >
               {preset.label}
             </Button>
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

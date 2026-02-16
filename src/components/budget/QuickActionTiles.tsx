@@ -59,17 +59,17 @@ export default function QuickActionTiles({
         <Link
           key={action.href}
           href={action.href}
-          className={`card-glance-item group rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-indigo-300 hover:shadow-md ${cardClassName}`.trim()}
+          className={`card-glance-item group rounded-2xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm transition-all hover:border-indigo-300 hover:shadow-md ${cardClassName}`.trim()}
         >
           <div
-            className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl text-xl ${action.color} transition-transform group-hover:scale-110`}
+            className={`mb-2.5 flex h-10 w-10 items-center justify-center rounded-xl text-xl ${action.color} transition-transform group-hover:scale-110`}
           >
             {action.icon}
           </div>
-          <h3 className="mb-1.5 text-base font-semibold text-gray-900">
+          <h3 className="mb-1 text-base font-semibold tracking-tight text-gray-900">
             {t(action.titleKey)}
           </h3>
-          <p className="overflow-hidden text-sm leading-5 text-gray-500 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:1]">
+          <p className="overflow-hidden text-[13px] leading-5 text-gray-500 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
             {t(action.descKey)}
           </p>
         </Link>
