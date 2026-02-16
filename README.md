@@ -107,9 +107,14 @@ npm run test:all
 npm run gate:regression
 ```
 
-- `npm run gate:regression` runs `lint -> test:all -> build`.
+- `npm run gate:regression` runs `audit:ui-lines -> lint -> test:all -> build`.
 - A markdown evidence report is generated under `reports/pass-evidence/`.
 - Manual checklist template: `PASS_EVIDENCE_TEMPLATE.md`.
 - WAF operation guides:
   - `WAF_RUNBOOK.md`
   - `WAF_24H_EVIDENCE_TEMPLATE.md`
+
+## UI Docs
+
+- UI card/layout policy: `docs/ui/UI_CARD_POLICY.md`
+- UI rewrite plan: `docs/ui/UI_REWRITE_PLAN.md`

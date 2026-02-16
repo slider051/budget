@@ -10,6 +10,8 @@
 :root {
     --background: #ffffff;
     --foreground: #171717;
+    --card-glance-width: 240px;
+    --card-glance-gap: 16px;
 }
 
 body {
@@ -19,4 +21,28 @@ body {
         system-ui,
         -apple-system,
         sans-serif;
+}
+
+.card-grid-glance-4 {
+    display: grid;
+    gap: var(--card-glance-gap);
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+    .card-grid-glance-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1280px) {
+    .card-grid-glance-4 {
+        grid-template-columns: repeat(4, var(--card-glance-width));
+        justify-content: space-between;
+    }
+}
+
+.card-glance-item {
+    width: 100%;
+    min-height: 168px;
 }

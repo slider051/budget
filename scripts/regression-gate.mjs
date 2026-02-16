@@ -62,7 +62,9 @@ function createReport(results) {
   lines.push("");
 
   for (const item of results) {
-    lines.push(`### ${item.status === 0 ? "PASS" : "FAIL"} \`${item.command}\``);
+    lines.push(
+      `### ${item.status === 0 ? "PASS" : "FAIL"} \`${item.command}\``,
+    );
     lines.push("");
     lines.push("```text");
     const combined = `${item.stdout}${item.stderr}`.trim();
@@ -76,6 +78,7 @@ function createReport(results) {
 }
 
 const commands = [
+  ["npm", ["run", "audit:ui-lines"]],
   ["npm", ["run", "lint"]],
   ["npm", ["run", "test:all"]],
   ["npm", ["run", "build"]],

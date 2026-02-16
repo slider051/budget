@@ -46,22 +46,22 @@ export default function QuickActionTiles() {
   const t = useTranslations("quickActions");
 
   return (
-    <div className="flex flex-wrap gap-6">
+    <div className="card-grid-glance-4">
       {actions.map((action) => (
         <Link
           key={action.href}
           href={action.href}
-          className="w-[240px] bg-white border border-gray-200 rounded-2xl shadow-sm p-6 hover:shadow-md hover:border-indigo-300 transition-all group"
+          className="card-glance-item rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-indigo-300 hover:shadow-md group"
         >
           <div
-            className={`w-12 h-12 rounded-xl ${action.color} flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform`}
+            className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl text-xl ${action.color} transition-transform group-hover:scale-110`}
           >
             {action.icon}
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="mb-1.5 text-base font-semibold text-gray-900">
             {t(action.titleKey)}
           </h3>
-          <p className="text-sm text-gray-500">{t(action.descKey)}</p>
+          <p className="text-sm leading-5 text-gray-500">{t(action.descKey)}</p>
         </Link>
       ))}
     </div>
