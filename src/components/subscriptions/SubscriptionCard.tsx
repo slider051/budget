@@ -1,25 +1,21 @@
-﻿"use client";
+"use client";
 
 import { memo, useState, useRef, useEffect } from "react";
 import {
   formatMoney,
-  getCycleLabel,
-  getCycleMonths,
+  getCycleProgress,
   getDiscountPercent,
   getDisplayedNextPaymentDate,
   getPerPersonDefaultPrice,
   getSubscriptionMonthlyAmount,
-  getSubscriptionYearlyAmount,
 } from "@/lib/subscriptions/calculations";
 import type { Subscription } from "@/types/subscription";
 
 interface SubscriptionCardProps {
   subscription: Subscription;
   isLogoBroken: boolean;
-  isMemoOpen: boolean;
   isDeleting: boolean;
   onLogoError: (id: string) => void;
-  onToggleMemo: (id: string) => void;
   onEdit: (subscription: Subscription) => void;
   onDelete: () => void;
 }
@@ -38,13 +34,33 @@ function getDDayInfo(
   return { days, label, urgent: days <= 7 };
 }
 
+function getProgressColor(percent: number): {
+  bar: string;
+  text: string;
+} {
+  if (percent >= 80) {
+    return {
+      bar: "bg-pink-400 dark:bg-pink-500",
+      text: "text-pink-600 dark:text-pink-400",
+    };
+  }
+  if (percent >= 50) {
+    return {
+      bar: "bg-emerald-400 dark:bg-emerald-500",
+      text: "text-emerald-600 dark:text-emerald-400",
+    };
+  }
+  return {
+    bar: "bg-sky-400 dark:bg-sky-500",
+    text: "text-sky-600 dark:text-sky-400",
+  };
+}
+
 function SubscriptionCardComponent({
   subscription,
   isLogoBroken,
-  isMemoOpen,
   isDeleting,
   onLogoError,
-  onToggleMemo,
   onEdit,
   onDelete,
 }: SubscriptionCardProps) {
@@ -63,24 +79,18 @@ function SubscriptionCardComponent({
   }, [menuOpen]);
 
   const monthlyAmount = getSubscriptionMonthlyAmount(subscription);
-  const yearlyAmount = getSubscriptionYearlyAmount(subscription);
   const discountPercent = getDiscountPercent(subscription);
   const nextPayment = getDisplayedNextPaymentDate(subscription);
   const paymentDateLabel =
     nextPayment.reason === "end_date" ? "만료" : "다음 결제";
   const baselinePrice = getPerPersonDefaultPrice(subscription);
-  const cycleLabel = getCycleLabel(
-    subscription.billingCycle,
-    subscription.customCycleMonths,
-  );
-  const cycleMonths = getCycleMonths(
-    subscription.billingCycle,
-    subscription.customCycleMonths,
-  );
   const dday = getDDayInfo(nextPayment.date);
+  const progress = getCycleProgress(subscription);
+  const progressColor = getProgressColor(progress);
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-gray-200 p-4 dark:border-gray-700 w-[300px]">
+    <div className="flex h-full w-[260px] flex-col rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+      {/* Header: logo + name + menu */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
           {subscription.logoUrl && !isLogoBroken ? (
@@ -140,7 +150,8 @@ function SubscriptionCardComponent({
         </div>
       </div>
 
-      <div className="mt-3">
+      {/* Price / discount / payment date — aligned to image end */}
+      <div className="mt-3 pl-[52px]">
         <p className="text-2xl font-extrabold text-indigo-700 dark:text-indigo-300">
           {formatMoney(monthlyAmount, subscription.currency)}/월
         </p>
@@ -172,35 +183,25 @@ function SubscriptionCardComponent({
         </div>
       </div>
 
-      <div className="mt-3 flex justify-end">
-        <button
-          type="button"
-          className="text-xs font-medium text-indigo-600 underline underline-offset-2 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
-          onClick={() => onToggleMemo(subscription.id)}
-        >
-          {isMemoOpen ? "상세 접기" : "상세"}
-        </button>
-      </div>
-
-      {isMemoOpen && (
-        <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
-          <p>
-            연 환산:{" "}
-            <strong>{formatMoney(yearlyAmount, subscription.currency)}</strong>
-          </p>
-          <p className="mt-1">
-            환산 기준: <strong>{cycleMonths}개월</strong> ({cycleLabel})
-          </p>
-          {subscription.accountName && (
-            <p className="mt-1 truncate">계정: {subscription.accountName}</p>
-          )}
-          {subscription.memo && (
-            <p className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-amber-900 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-200">
-              {subscription.memo}
-            </p>
-          )}
-        </div>
+      {/* Memo — single line below payment info */}
+      {subscription.memo && (
+        <p className="mt-2 truncate pl-[52px] text-xs text-amber-700 dark:text-amber-300">
+          {subscription.memo}
+        </p>
       )}
+
+      {/* Cycle progress bar */}
+      <div className="mt-auto pt-3">
+        <div className="flex items-center justify-between text-[10px]">
+          <span className={progressColor.text}>{progress}%</span>
+        </div>
+        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+          <div
+            className={`h-full rounded-full transition-all ${progressColor.bar}`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -94,15 +94,13 @@ export default function SubscriptionsPage() {
           ) : null}
 
           {!isLoading && sortedSubscriptions.length > 0 ? (
-            <div className="flex max-w-[950px] flex-wrap gap-3">
+            <div className="flex max-w-[830px] flex-wrap gap-3">
               {sortedSubscriptions.map((subscription) => (
                 <SubscriptionCard
                   key={subscription.id}
                   subscription={subscription}
                   isLogoBroken={editor.logoError[subscription.id] ?? false}
-                  isMemoOpen={editor.memoOpenMap[subscription.id] ?? false}
                   onLogoError={editor.handleLogoError}
-                  onToggleMemo={editor.handleToggleMemo}
                   onEdit={editor.handleEdit}
                   onDelete={() => {
                     if (editor.deletingId) return;

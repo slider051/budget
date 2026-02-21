@@ -172,6 +172,32 @@ export function getDisplayedNextPaymentDate(
   return { date: nextPayment, reason: "next_payment" };
 }
 
+export function getCycleProgress(
+  subscription: Subscription,
+  now: Date = new Date(),
+): number {
+  if (!isValidDateString(subscription.billingStartDate)) return 0;
+
+  const cycleMonths = getCycleMonths(
+    subscription.billingCycle,
+    subscription.customCycleMonths,
+  );
+
+  const today = parseDate(getLocalToday(now));
+  let periodStart = parseDate(subscription.billingStartDate);
+
+  while (addMonths(periodStart, cycleMonths) <= today) {
+    periodStart = addMonths(periodStart, cycleMonths);
+  }
+
+  const periodEnd = addMonths(periodStart, cycleMonths);
+  const totalMs = periodEnd.getTime() - periodStart.getTime();
+  const elapsedMs = today.getTime() - periodStart.getTime();
+
+  if (totalMs <= 0) return 0;
+  return Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100)));
+}
+
 export function getCycleLabel(
   billingCycle: BillingCycle,
   customCycleMonths: number | null,

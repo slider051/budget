@@ -39,7 +39,6 @@ export function useSubscriptionEditor({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<Record<string, boolean>>({});
-  const [memoOpenMap, setMemoOpenMap] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -86,10 +85,6 @@ export function useSubscriptionEditor({
       defaultPrice: String(preset.defaultPrice),
       currency: preset.currency,
     }));
-  }, []);
-
-  const handleToggleMemo = useCallback((id: string) => {
-    setMemoOpenMap((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
   const handleLogoError = useCallback((id: string) => {
@@ -156,7 +151,6 @@ export function useSubscriptionEditor({
     editingId,
     errorMessage,
     logoError,
-    memoOpenMap,
     isSubmitting,
     deletingId,
     previewPaymentText,
@@ -164,7 +158,6 @@ export function useSubscriptionEditor({
     previewDateLabel,
     previewDate: previewDateInfo.date,
     handlePresetChange,
-    handleToggleMemo,
     handleLogoError,
     handleEdit,
     handleSubmit,
